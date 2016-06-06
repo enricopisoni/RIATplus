@@ -1,3 +1,0 @@
-aggrInfo/configuration/prepareFifth.txt
-aggrInfo/configuration/finalizeFifth.txt
-aggrInfo/configuration/restoreFifth.txt

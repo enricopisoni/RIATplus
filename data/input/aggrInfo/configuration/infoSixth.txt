@@ -1,3 +1,0 @@
-aggrInfo/configuration/prepareSixth.txt
-aggrInfo/configuration/finalizeSixth.txt
-aggrInfo/configuration/restoreSixth.txt

@@ -1,3 +1,0 @@
-aggrInfo/configuration/prepareGeneric.txt
-aggrInfo/configuration/finalizeGeneric.txt
-aggrInfo/configuration/restoreGeneric.txt

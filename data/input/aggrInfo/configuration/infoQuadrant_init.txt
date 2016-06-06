@@ -1,3 +1,0 @@
-aggrInfo/configuration/prepareQuadrant_init.txt
-aggrInfo/configuration/finalizeQuadrant.txt
-aggrInfo/configuration/restoreQuadrant.txt
