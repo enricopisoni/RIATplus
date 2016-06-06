@@ -1,0 +1,3 @@
+aggrInfo/configuration/prepareNeuralNet.txt
+aggrInfo/configuration/finalizeNeuralNet.txt
+aggrInfo/configuration/restoreNeuralNet.txt

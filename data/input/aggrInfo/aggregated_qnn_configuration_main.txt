@@ -1,0 +1,7 @@
+QNN
+aggrInfo/configuration/infoGeneric.txt
+aggrInfo/configuration/infoQuadrant_main.txt
+aggrInfo/configuration/infoNeuralNet.txt
+aggrInfo/configuration/infoApplyWholeDomain.txt
+aggrInfo/configuration/infoFifth.txt
+aggrInfo/configuration/infoSixth.txt
