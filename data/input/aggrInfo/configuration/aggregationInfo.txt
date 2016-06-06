@@ -1,0 +1,13 @@
+INITquadrant_emi_
+0
+10
+stringToRun='';
+stringToRun=strcat(stringToRun,aggregationInfo.functionName);
+stringToRun=strcat(stringToRun,'(');
+stringToRun=strcat(stringToRun,'sourceGrid,');
+stringToRun=strcat(stringToRun,'totalCells,');
+stringToRun=strcat(stringToRun,'nx,');
+stringToRun=strcat(stringToRun,'ny,');
+stringToRun=strcat(stringToRun,'optimizerValues,');
+stringToRun=strcat(stringToRun,'optimizerCondition)');
+[resGrid]=eval(stringToRun);

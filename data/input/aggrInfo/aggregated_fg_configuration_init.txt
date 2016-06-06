@@ -1,0 +1,7 @@
+FIRSTGUESS
+aggrInfo/configuration/infoGeneric.txt
+aggrInfo/configuration/infoFirstGuess_init.txt
+aggrInfo/configuration/infoFirstGuess.txt
+aggrInfo/configuration/infoApplyWholeDomain.txt
+aggrInfo/configuration/infoFifth.txt
+aggrInfo/configuration/infoSixth.txt
