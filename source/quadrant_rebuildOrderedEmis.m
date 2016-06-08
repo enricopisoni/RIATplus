@@ -9,8 +9,10 @@ function [resEmis]=quadrant_rebuildOrderedEmis(emis, refInfo, commonDataInfo)
 %ncelopt=eval(execString);
 
 %restore quadrant emissions
-flag_optim_dom=commonDataInfo.domainInfo.flag_optim_dom;
-ncelopt=length(find(flag_optim_dom==1 | flag_optim_dom==2));
+%MOD20160607ET
+flag_region_dom=commonDataInfo.domainInfo.flag_optim_dom;
+ncelopt=length(find(flag_region_dom==1 | flag_region_dom==2));
+%MOD20160607ET
 
 s1_NOX = emis((ncelopt*0)+1:ncelopt*1);
 s2_NOX = emis((ncelopt*1)+1:ncelopt*2);

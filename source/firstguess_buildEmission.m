@@ -64,17 +64,24 @@ end
 %read net and create Delta emissions
 %emi delta
 %if strcmp(NN.Class,'Delta')==1
+
+%emi delta
 if isDelta
-    %20140403 ET - Filtering basecase cells
     flag_optim_dom=commonDataInfo.domainInfo.flag_optim_dom;
+    flag_opt_filt=flag_optim_dom(flag_region_dom==1 | flag_region_dom==2,1);
+    %20140403 ET - Filtering basecase cells
     BCemi=BCset.emi_bc(flag_optim_dom==1 | flag_optim_dom==2,:);
     BCconc=BCset.conc_bc(flag_optim_dom==1 | flag_optim_dom==2,:);
+    emissioni=emissioni(flag_opt_filt==1 | flag_opt_filt==2,:);
     
-    emissioni2=(finalEmis-BCemi)./BCemi;
+    emissioni2=(emissioni-BCemi)./BCemi;
     finalEmis=emissioni2;
     test_nan=find(isnan(finalEmis));
     finalEmis(test_nan)=0.;
 end
+
+
+
 %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\emissioni_new','finalEmis');
 
 end

@@ -4,7 +4,17 @@ function [aqi_per_cell]= firstguess_do_aqi_per_cell( emissioni, NN, aggregationI
         %ToDO fill: aggregationInfo.flatweight;
         %use aggregationInfo.firstguess
         
-        input_rete2=emissioni;
+%         %MOD20160607ET
+%         flag_optim_dom=commonDataInfo.domainInfo.flag_optim_dom;
+%         flag_region_dom=commonDataInfo.domainInfo.flag_region_dom;
+%         flag_opt_filt=flag_optim_dom(flag_region_dom==1 | flag_region_dom==2,1);
+%         input_rete2=emissioni;
+%         if strcmp(NN.Class,'Delta')==0 %if not delta filter on optim
+%                 %load network
+%                 input_rete2=input_rete2(flag_opt_filt==1 | flag_opt_filt==2,:);
+%         end
+%         input_rete2=input_rete2';
+%         %MOD20160607ET     
         
         flag_optim_dom=commonDataInfo.domainInfo.flag_optim_dom;
         rowToKeep=find(flag_optim_dom==1 | flag_optim_dom==2); %rows related to PAD

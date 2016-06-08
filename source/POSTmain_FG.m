@@ -164,10 +164,15 @@ livelliAQI={0:5:45,0:5:45,10000:5000:90000,1000:250:6000,0:5:45,0:5:45,0:1:50};
 % OPERA EMR
 % livelliAQI={0:1:25,0:1:20,30000:2500:70000,5000:250:9000,90:2.5:120,0:2.5:35,0:2.5:35};
 
-% managing the fact that PAD and ACD are different
-indpad=(flag_optim_dom==1 | flag_optim_dom==2);
-indacd=flag_aqi_dom(indpad);
-
+%MOD20160531ET
+ % managing the fact that PAD and ACD are different
+ indpad=(flag_optim_dom==1 | flag_optim_dom==2);
+ indacd=logical(flag_aqi_dom(indpad));
+ indreg=(flag_region_dom==1 | flag_region_dom==2);
+ indacd_pad=logical(flag_aqi_dom(indpad));
+ %create sSet to contain a solution with AQIs filtered on ACD domain
+sSet_acd=sSet;
+%MOD20160531ET
 
 %create aqi maps
 for indexPareto=1:npoints
@@ -187,13 +192,22 @@ for indexPareto=1:npoints
                 %    DSuperSet(indexSea).DSet(j),bcSuperSet(indexSea).bcSet(j));
                 SRInfo=aggregationInfo.firstguess;
                 % calling:
+                
+                %MOD20160531ET Compute AQI at cle Level
+                % function [emi_low,emi_high,aqi_val2]=POST_FG_compute_aqi(x,SR,DD,indexSea, aqiIndex)
+                [~,~,aqi_val_CLE]=POST_FG_compute_aqi(sSet(indexPareto).X,SRInfo,...
+                    DSuperSet, indexSea, j, emi, commonDataInfo,sSet(1).X);
                 % function [emi_low,emi_high,aqi_val2]=POST_FG_compute_aqi(x,SR,DD,indexSea, aqiIndex)
                 [emi_low,emi_high,aqi_val]=POST_FG_compute_aqi(sSet(indexPareto).X,SRInfo,...
-                    DSuperSet, indexSea, j, emi, commonDataInfo);
+                    DSuperSet, indexSea, j, emi, commonDataInfo,sSet(1).X);
                 %DSuperSet(indexSea).DSet(j), indexSea, j);
                 
                 %ENR20130417 - adding the model bias
-                aqi_val=aqi_val'+model_bias(indexSea).AQIs{j};
+                flag_opt_filt=logical(flag_optim_dom(flag_region_dom==1 | flag_region_dom==2,1));
+                aqi_val_full=aqi_val_CLE;
+                aqi_val_full(flag_opt_filt)=aqi_val;
+                aqi_val_full=aqi_val_full+model_bias(indexSea).AQIs{j};                          
+                %MOD20160531ETqi_val'+model_bias(indexSea).AQIs{j};
                 
                 %compute external costs only for PM10, and for annual
                 %values
@@ -243,10 +257,12 @@ for indexPareto=1:npoints
                 %create map of aqi
                 %UNIBS(ET)20131002 - flag_region_dom in input used
                 %to print the map for the entire regional domain
-                POSTcomputeMaps(livelliAQI{j},aqi_val,...
+                                %MOD20160531ET
+                POSTcomputeMaps(livelliAQI{j},aqi_val_full,...
                     strcat('maps_aqi/',nomeaqi{j},nomesea{indexSea}),strcat(nomeaqi{j},nomesea{indexSea},ylab(1,j)),...
                     indexPareto,outdir,pathprb,pathpci,flag_region_dom,detailresults);
-                
+                                %MOD20160531ET
+                                
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %UPDATE SSET WITH MODEL BIAS
                 aqi_per_cell=aqi_val;
@@ -257,26 +273,25 @@ for indexPareto=1:npoints
                     aqi_per_cell(isnan(aqi_per_cell))=[];
                 end
                 
+                %MOD20160531ET
                 %structure of sSet:
                 %sSet(npoints).AQIs(yea-win-sum, AQInum, mean-thre-pwa)
                 %average
-                sSet(indexPareto).AQIs(indexSea,j,1)=mean(aqi_per_cell);
+                sSet(indexPareto).AQIs(indexSea,j,1)=mean(aqi_per_cell);  %over PAD domain
+                sSet_acd(indexPareto).AQIs(indexSea,j,1)=mean(aqi_per_cell(indacd_pad,1)); %over ACD domain (for Pareto)
                 % number of cells over thresold
                 T = ones(size(aqi_per_cell)) * cell_threshold_set(j);
-                sSet(indexPareto).AQIs(indexSea,j,2)=sum(aqi_per_cell > T);
+                sSet(indexPareto).AQIs(indexSea,j,2)=sum(aqi_per_cell > T);       
+                sSet_acd(indexPareto).AQIs(indexSea,j,2)=sum(aqi_per_cell(indacd_pad,1) > T(indacd_pad,1));   %over ACD domain (for Pareto)
                 % population average
                 indpop=pop;
+                indpop(indpad==0)=[];
                 %UNIBS(ET)20131002 - Erase cells outside regional domain
-                indpop(flag_region_dom==0)=[];
-                indpop(indacd==0)=[];
-                %PATCH 20160601 EP                
-                if isempty(indisnan)==0
-                    indpop(indisnan)=[];
-                end
                 sSet(indexPareto).AQIs(indexSea,j,3)=sum(aqi_per_cell.*indpop)/sum(indpop);
+                sSet_acd(indexPareto).AQIs(indexSea,j,3)=sum(aqi_per_cell(indacd_pad,1).*indpop(indacd_pad,1))/sum(indpop(indacd_pad,1));%over ACD domain (for Pareto)
                 %END OF MODEL BIAS UPDATE
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                
+                %MOD20160531ET
             end
         end
         
@@ -306,7 +321,18 @@ extCost_morb=extCost_morb/1000000;
 extCost_yoll=extCost_yoll/1000000;
 
 %CREATE PARETO CURVE AS TXT FILE, ADDING CO2 BUDGET AND EXTERNAL COSTS
-[cost_final_over_cle,aqi_final]=POSTparetocurve(sSet,budgetCO2,extCost_morb,extCost_yoll);
+%MOD20160531ET
+for paretoloop=1:2
+    switch paretoloop
+        case 1
+            SolSet=sSet;
+        case 2
+            SolSet=sSet_acd; %this last case is used also for pareto curve
+    end
+
+[cost_final_over_cle,aqi_final]=POSTparetocurve(SolSet,budgetCO2,extCost_morb,extCost_yoll,paretoloop);
+end
+%MOD20160531ET
 
 %CREATE PARETO CURVE AS FIGURES (IF REQUIRED)
 if detailresults==1 %in case detailed results are requestd
@@ -361,7 +387,7 @@ fclose(fidStatus)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %FUNCTION TO COMPUTE PARETO CURVE
-    function [cost_final_over_cle,aqi_final]=POSTparetocurve(sSet,budgetCO2,extCost_morb,extCost_yoll)
+    function [cost_final_over_cle,aqi_final]=POSTparetocurve(sSet,budgetCO2,extCost_morb,extCost_yoll,paretoloop)
         
         %number of pareto points
         npoints=size(sSet,2);
@@ -442,8 +468,16 @@ fclose(fidStatus)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         %write results on CSV file, aggregated values to depict pareto curve
-        disp('saving pareto curve')
-        file=strcat(outdir,'/pareto/resultscostvsaqis.csv');
+                %MOD20160531ET
+        switch paretoloop
+            case 1
+
+        file=strcat(outdir,'/pareto/resultscostvsaqis_pad.csv');
+        %MOD20160531ET
+            case 2
+        file=strcat(outdir,'/pareto/resultscostvsaqis_acd.csv');
+        end
+                        %MOD20160531ET
         fid=fopen(file,'wt');
         delim=',';
         %fprintf(fid,'%s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s %c %s\n',...
@@ -867,8 +901,8 @@ fclose(fidStatus)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %FUNCTION TO COMPUTE EMISSIONS AND AQIS VALUES PER CELL
-
-    function [emi_low,emi_high,aqi_val2]=POST_FG_compute_aqi(x,SR,DD,indexSea, aqiIndex, emi, commonDataInfo)
+        %MOD20160531ET
+    function [emi_low,emi_high,aqi_val2]=POST_FG_compute_aqi(x,SR,DD,indexSea, aqiIndex, emi, commonDataInfo,x_CLE)
         
         %compute aqi related to an optimal solution
         %define low emissions matrix (to be used for emission computation)
@@ -878,9 +912,20 @@ fclose(fidStatus)
         xtmplow=x(global_data(:,5)==1);
         xtmplow2=[xtmplow xtmplow xtmplow xtmplow xtmplow xtmplow];
         
+        %MOD20160531ET
+        xtmplow_CLE=x_CLE(global_data(:,5)==1);
+        xtmplow2_CLE=[xtmplow_CLE xtmplow_CLE xtmplow_CLE xtmplow_CLE xtmplow_CLE xtmplow_CLE];
+        %MOD20160531ET
+        
         %define high emissions matrix (to be used for emission computation)
         xtmphigh=x(global_data(:,5)==2);
         xtmphigh2=[xtmphigh xtmphigh xtmphigh xtmphigh xtmphigh xtmphigh];
+        
+        %define high emissions matrix (to be used for emission computation)
+        %MOD20160531ET
+        xtmphigh_CLE=x_CLE(global_data(:,5)==2);
+        xtmphigh2_CLE=[xtmphigh_CLE xtmphigh_CLE xtmphigh_CLE xtmphigh_CLE xtmphigh_CLE xtmphigh_CLE];
+        %MOD20160531ET
         
         %UNIBS(ET)20131001 - from here to line the end of the first for
         %flag_optim_dom has been changed with flag_region_dom
@@ -897,8 +942,9 @@ fclose(fidStatus)
                 %emission order: NOX, COV, NH3, PM10, PM25, SO2.
                 emi_low(i,:)=flag_region_dom(i,:);
                 emi_high(i,:)=flag_region_dom(i,:);
-                
-            elseif (flag_region_dom(i)==1 | flag_region_dom(i)==2)
+                             %MOD20160531ET
+            elseif (flag_region_dom(i)==1 | flag_region_dom(i)==2)& (flag_optim_dom(i)==1 | flag_optim_dom(i)==2)
+                             %MOD20160531ET
                 %for cells inside optimization domain
                 %separate low and high emissions
                 tmp_emi_low=emi{i,2}(global_data(:,5)==1,:);
@@ -928,6 +974,40 @@ fclose(fidStatus)
                     emiRedHigh(sa,1:6)=sum(gdh_emibase(:,1:6).*gdh_re(:,:).*gdh_ar(:,:),1); %remaining emissions
                 end
                 emi_high(i,:)=base_emi_high(i,:)+base_emi_high_noc(i,:)-sum(emiRedHigh);
+                  
+           %MOD20160531ET
+            elseif (flag_region_dom(i)==1 | flag_region_dom(i)==2) & (flag_optim_dom(i)==0)
+                %for cells inside optimization domain
+                %separate low and high emissions
+                tmp_emi_low=emi{i,2}(global_data(:,5)==1,:);
+                tmp_emi_high=emi{i,2}(global_data(:,5)==2,:);
+                
+                gdl=global_data(global_data(:,5)==1,:);
+                gdl_sa=gdl(:,[2 3]);
+                [a , ~, c]=unique(gdl_sa,'rows');
+                for sa=1:size(a,1)
+                    ind_sa_gdl=find(gdl(:,2)==a(sa,1) & gdl(:,3)==a(sa,2));
+                    gdl_emibase=tmp_emi_low(ind_sa_gdl,:); %emissions for this cell, for all techs in sa
+                    gdl_re=gdl(ind_sa_gdl,6:11)/100; %re for this cell, for all techs in sa
+                    gdl_ar=xtmplow2_CLE(ind_sa_gdl,:); %ar for this cell, for all techs in sa
+                    emiRed(sa,1:6)=sum(gdl_emibase(:,1:6).*gdl_re(:,:).*gdl_ar(:,:),1); %reduced emissions
+                end
+                emi_low(i,:)=base_emi_low(i,:)+base_emi_low_noc(i,:)-sum(emiRed);
+                
+                gdh=global_data(global_data(:,5)==2,:);
+                gdh_sa=gdh(:,[2 3]);
+                [a2 , ~, c]=unique(gdh_sa,'rows');
+                emiRedHigh=[]; %20150304 ET - deal with DBs without punctual sources
+                for sa=1:size(a2,1)
+                    ind_sa_gdh=find(gdh(:,2)==a2(sa,1) & gdh(:,3)==a2(sa,2));
+                    gdh_emibase=tmp_emi_high(ind_sa_gdh,:); %emissions for this cell, for all techs in sa
+                    gdh_re=gdh(ind_sa_gdh,6:11)/100; %re for this cell, for all techs in sa
+                    gdh_ar=xtmphigh2_CLE(ind_sa_gdh,:); %ar for this cell, for all techs in sa
+                    emiRedHigh(sa,1:6)=sum(gdh_emibase(:,1:6).*gdh_re(:,:).*gdh_ar(:,:),1); %remaining emissions
+                end
+                emi_high(i,:)=base_emi_high(i,:)+base_emi_high_noc(i,:)-sum(emiRedHigh);
+                %MOD20160531ET      
+                
             end
         end
         
@@ -1029,7 +1109,7 @@ fclose(fidStatus)
         %aqi_per_cell=interface_get_aqipercell(input_rete2, NN, aggregationInfo.mathIntermediateData, commonDataInfo, periodIndex, aqiIndex );
         periodIndex=1;
         aqi_val2=firstguess_get_aqipercell(aqi_per_cell, aggregationInfo, commonDataInfo, periodIndex, aqiIndex );
-        
+        aqi_val2=aqi_val2';
     end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

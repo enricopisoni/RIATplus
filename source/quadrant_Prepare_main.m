@@ -16,7 +16,7 @@ quadrantStruct.geomFactor=4;
             if commonData.optim_flags.mode_ce_mo==3 %in case aggregated scenario analysis, do not load Dd
                 D=struct('D', {-999}, 'd', {-999}, 'Dp', {-999}, 'dp', {-999});
             else
-                D=load(strcat('.', filesep, strtrim(commonData.pathDd(h).Dd(i,:))));
+                D=load(strcat(strtrim(commonData.pathDd(h).Dd(i,:))));
             end
         else
             D=struct('D', {-999}, 'd', {-999}, 'Dp', {-999}, 'dp', {-999});
