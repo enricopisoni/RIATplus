@@ -472,7 +472,7 @@ fclose(fidStatus)
         switch paretoloop
             case 1
 
-        file=strcat(outdir,'/pareto/resultscostvsaqis_pad.csv');
+        file=strcat(outdir,'/pareto/resultscostvsaqis.csv');
         %MOD20160531ET
             case 2
         file=strcat(outdir,'/pareto/resultscostvsaqis_acd.csv');

@@ -10,7 +10,7 @@ function [resEmis]=quadrant_rebuildOrderedEmis(emis, refInfo, commonDataInfo)
 
 %restore quadrant emissions
 %MOD20160607ET
-flag_region_dom=commonDataInfo.domainInfo.flag_optim_dom;
+flag_region_dom=commonDataInfo.domainInfo.flag_region_dom;
 ncelopt=length(find(flag_region_dom==1 | flag_region_dom==2));
 %MOD20160607ET
 
