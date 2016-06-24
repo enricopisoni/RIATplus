@@ -247,9 +247,19 @@ warning off MATLAB:MKDIR:DirectoryExists
 %extpopTmp=importdata(pathextpop);
 %model_bias_data=importdata(pathMB);
 %end test
-commonDataInfo=load_CommonDataInfo(f1,f3);
 
-aggregationInfo=load_AggregationInfo(commonDataInfo.aggType, commonDataInfo.aggConfigurationFiles);
+%20160616 MM
+% new version
+aggregationInfo=load_AggregationInfo(f3);
+commonDataInfo=load_CommonDataInfo(f1, aggregationInfo.type);
+% end previous version
+
+% MM previous version
+%commonDataInfo=load_CommonDataInfo(f1,f3);
+%aggregationInfo=load_AggregationInfo(commonDataInfo.aggType, commonDataInfo.aggConfigurationFiles);
+% end previous version
+%20160616 MM
+
 %[dirs, info]=init_CommonVar(f1, 'main');
 
 %new MM
@@ -768,10 +778,14 @@ if commonDataInfo.optim_flags.mode_ce_mo==0       %multi-objective
         aggregationInfo.firstguess.radius=radius;
         aggregationInfo.firstguess.flatWeight=flatWeight;
         aggregationInfo.firstguess.pollutantList=pollutantList;
+        %A=aggregationInfo.fullA;
+        %B=aggregationInfo.fullB;
+        %LB=aggregationInfo.fullLB;
+        %UB=aggregationInfo.fullUB;
     else
         a=0;
     end
-    x_BEST_free = MAINcompute_sol_(A,B,LB,UB,x0,aggregationInfo, commonDataInfo, 1);
+    x_BEST_free = MAINcompute_sol_(A,B,LB,UB,x0,aggregationInfo, commonDataInfo, commonDataInfo.aqi_horizon);
     %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint24_new', 'x_BEST_free');
     %end MM
     
@@ -820,7 +834,9 @@ if commonDataInfo.optim_flags.mode_ce_mo==0       %multi-objective
             % compute best solution
             % MM Version (two extra parameters)
             %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint15b_new', 'A1','B1','LB','UB','x0');
-            x_sol_free = MAINcompute_sol_(A1,B1,LB,UB,x0,aggregationInfo, commonDataInfo,i);
+            %x_sol_free = MAINcompute_sol_(A1,B1,LB,UB,x0,aggregationInfo, commonDataInfo,i);
+            % last parameter IS NOT a season index
+            x_sol_free = MAINcompute_sol_(A1,B1,LB,UB,x0,aggregationInfo, commonDataInfo,commonDataInfo.aqi_horizon);
             %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint26a_new', 'x_sol_free');
             
             %             sol = buildSolution(x_sol_free, fixed_x, inhibited_x, ...
@@ -925,7 +941,7 @@ if commonDataInfo.optim_flags.mode_ce_mo==0       %multi-objective
                 %x_sol_free = MAINcompute_sol(A1,B1,LB,UB,x0);
                 % MM Version (one extra parameter)
                 %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint15c_new', 'A1','B1','LB','UB','x0');
-                x_sol_free = MAINcompute_sol_(A1,B1,LB,UB,x0,aggregationInfo, commonDataInfo,1);
+                x_sol_free = MAINcompute_sol_(A1,B1,LB,UB,x0,aggregationInfo, commonDataInfo,commonDataInfo.aqi_horizon);
                 %                 sol = buildSolution(x_sol_free, fixed_x, inhibited_x, ...
                 %                     costconstr'*(x_sol_free) + deltaCost, ...
                 %                     thres_cost);
@@ -986,7 +1002,8 @@ elseif commonDataInfo.optim_flags.mode_ce_mo==1   %cost-effectiveness
     %x_sol_free = MAINcompute_sol(A1,B1,LB,UB,x0);
     % MM Version (one extra parameter)
     %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint15d_new', 'A1','B1','LB','UB','x0');
-    if isequal(aggregationInfo.type, 'FIRSTGUESS')
+    if (isequal(strtrim(aggregationInfo.type),'FIRSTGUESS')==1)
+    %if isequal(aggregationInfo.type, 'FIRSTGUESS')
         fName=strtrim(commonDataInfo.pathANN(1).ANNs(1,:));
         aggregationInfo.firstguess=0;
         if (strcmp(fName,'-999') == 0)
@@ -1000,7 +1017,7 @@ elseif commonDataInfo.optim_flags.mode_ce_mo==1   %cost-effectiveness
     else
         a=0;
     end
-    x_sol_free = MAINcompute_sol_(A1,B1,LB,UB,x0, aggregationInfo, commonDataInfo,1);
+    x_sol_free = MAINcompute_sol_(A1,B1,LB,UB,x0, aggregationInfo, commonDataInfo,commonDataInfo.aqi_horizon);
     %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint28a_new', 'x_sol_free');
     
     %     sol = buildSolution(x_sol_free, fixed_x,
@@ -1647,6 +1664,7 @@ toc
         
         %remove from constraints the part of the problem related to the
         %techs not to be used in optimization
+        aggregationInfo.fullB=B;
         B = B - (A * inhibited_x);
         
         
@@ -1656,12 +1674,15 @@ toc
         deltaCost = sum(costconstr.*(inhibited_x));
         
         % update of UB - keep only technologies to be optimized
+        aggregationInfo.fullUB=UB;
         UB = UB(final_active_technologies==1);
         
         % update of LB - keep only technologies to be optimized
+        aggregationInfo.fullLB=CLE;
         LB = LB(final_active_technologies==1);
         
         % update of CLE - keep only technologies to be optimized
+        aggregationInfo.fullCLE=CLE;
         CLE = CLE(final_active_technologies==1);
         
         % update of Dx - keep only technologies to be optimized
@@ -1674,10 +1695,13 @@ toc
         
         % keep only technologies to be optimized
         % update of A;
+        aggregationInfo.fullA=A;
         A = A(:,(final_active_technologies==1));
         % update of A1;
+        aggregationInfo.fullA1=A1;
         A1 = A1(:,(final_active_technologies==1));
         % update of costconstr;
+        aggregationInfo.fullcostconstr=costconstr;
         costconstr = costconstr(final_active_technologies==1);
         %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\DOptSet_before_new', 'DOptSet');
         newAgg=neuralNet_set_FullDOptSet(aggregationInfo, DOptSet);
@@ -1798,22 +1822,41 @@ toc
         % calculation starts from sparse matrices
         % delta or absolute (x = 0 or CLE)
         %TODO implement delta or absolute
-        E = D * sparse(x);
-        E = d - E;
-        E_full = full(E);
         %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint5_new','E_full');
         
-        %for quadrant case
-        %from global matrix, extract quadrant informations
         %MM check split in 4 quadrant case
         
         %!!!!Load radius 4 or 16
         
         % 20160420 fg version
         if isequal(aggregationInfo.type, 'FIRSTGUESS')
+             if size(x,1) == size(aggregationInfo.fullCLE,1)
+                 thisCLE=aggregationInfo.fullCLE;
+             else
+                 thisCLE=CLE;
+             end
+             
+            
+%             E = D * sparse(x);
+%             E = d - E;
+%             E_full = full(E);
+            Escenario = D * sparse(x);
+            Escenario = d - Escenario;
+            %sum(D)
+
+            Ecle = D * sparse(thisCLE);
+            Ecle = d - Ecle;
+            
+            E_full = full(Ecle) - full(Escenario);
+%             plot(E_full)
             emis=firstguess_rebuildOrderedEmis(E_full, aggregationInfo.geometryIntermediateData, commonDataInfo);
         else
             % 20160420 nn/quadrant version
+            E = D * sparse(x);
+            E = d - E;
+            E_full = full(E);
+        %for quadrant case
+        %from global matrix, extract quadrant informations
             emis=interface_rebuildOrderedEmis(E_full, aggregationInfo.geometryIntermediateData, commonDataInfo);
         end
         %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint6_new','emis');
@@ -1859,17 +1902,34 @@ toc
             %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPointEmissioni_p_new','emissioni');
         end
         %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint7_new','emissioni');
-         
+
+        if isequal(aggregationInfo.type, 'FIRSTGUESS')
+            aqi_per_cell=firstguess_do_aqi_per_cell(emissioni, NN, aggregationInfo, commonDataInfo, periodIndex, aqiIndex);
+        else
+            aqi_per_cell=do_interface_get_aqi_per_cell(emissioni, NN, aggregationInfo, commonDataInfo, periodIndex, aqiIndex);
+        end
             % 20160420 fg version
-            if isequal(aggregationInfo.type, 'FIRSTGUESS')
-                aqi_per_cell=firstguess_do_aqi_per_cell(emissioni, NN, aggregationInfo, commonDataInfo, periodIndex, aqiIndex);
-            else
-                %strtrim(pathANN(k).ANNs(indaqi,:))
-                % nn case
-                % 20160418: MM & EP net/quadrants input
-                aqi_per_cell=do_interface_get_aqi_per_cell(emissioni, NN, aggregationInfo, commonDataInfo, periodIndex, aqiIndex);
-            end
-         % 20160418: MM & EP regression input
+%             if isequal(aggregationInfo.type, 'FIRSTGUESS')
+% %                 sum(emissioni)
+%                 aqi_per_cell=firstguess_do_aqi_per_cell(emissioni, NN, aggregationInfo, commonDataInfo, periodIndex, aqiIndex);
+%                 fName=strtrim(commonDataInfo.pathBc(periodIndex).Bc(aqiIndex,:));
+%                 if (strcmp(fName,'-999') == 0)
+%                     % check compatibility of elements
+%                     concentration=firstguess_read_Bc(fName);
+%                     conc2=reshape(concentration',nx*ny,1);
+%                     conc2(flag_optim_dom==0)=[];
+%                     aqi_per_cell=conc2'-aqi_per_cell;
+%                 else
+%                     aqi_per_cell=aqi_per_cell;
+%                 end
+%                 
+%             else
+%                 %strtrim(pathANN(k).ANNs(indaqi,:))
+%                 % nn case
+%                 % 20160418: MM & EP net/quadrants input
+%                 aqi_per_cell=do_interface_get_aqi_per_cell(emissioni, NN, aggregationInfo, commonDataInfo, periodIndex, aqiIndex);
+%             end
+%          % 20160418: MM & EP regression input
          
             % 20160420 nn/quadrant version
         
@@ -1895,7 +1955,22 @@ toc
         aqi_per_cell = MAINcompute_aqi_per_cell_(x, NN,D,BCset, aggregationInfo, commonDataInfo, periodIndex, aqiIndex);
         %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint10_new', 'aqi_per_cell');
         
-       
+        if isequal(aggregationInfo.type, 'FIRSTGUESS')
+            %                 sum(emissioni)
+%             aqi_per_cell=firstguess_do_aqi_per_cell(emissioni, NN, aggregationInfo, commonDataInfo, periodIndex, aqiIndex);
+            fName=strtrim(commonDataInfo.pathBc(periodIndex).Bc(aqiIndex,:));
+            if (strcmp(fName,'-999') == 0)
+                % check compatibility of elements
+                concentration=firstguess_read_Bc(fName);
+                conc2=reshape(concentration',nx*ny,1);
+                conc2(flag_optim_dom==0)=[];
+                aqi_per_cell=conc2'-aqi_per_cell;
+            else
+                aqi_per_cell=aqi_per_cell;
+            end
+        end
+           
+        
         % managing the fact that PAD and ACD are different
         % define indexes for pad domain
         indpad=(flag_optim_dom==1 | flag_optim_dom==2);
@@ -2120,6 +2195,8 @@ toc
             % 20160421 First guess setting
             if isequal(aggregationInfo.type, 'FIRSTGUESS')
                 D=firstguess_get_aqi_D(aggregationInfo.geometryIntermediateData, 1);
+                sum(sum(D.D))
+                sum(D.d)
                 bc=1;
                 % 20160421 First guess setting
                 nn=1;
@@ -2136,7 +2213,9 @@ toc
                 nn=interface_get_aqi_nnOptSet(aggregationInfo.mathIntermediateData, 1);
             end
 
-            %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint18a_new', 'D','bc');
+            %save('C:\Users\enrico\Desktop\RIAT_FINAL\data\input\works', 'D','aggregationInfo', ...
+            %    'x0', 'A', 'B', 'LB', 'UB');
+            %load('C:\Users\enrico\Desktop\RIAT_FINAL\data\input\works');
             x_sol=fmincon(@(x) MAINcompute_aqi_(x,nn,D,...
                 commonDataInfo.aqi_obj_function_type(1),...
                 commonDataInfo.cell_threshold_set(commonDataInfo.aqi_obj(1)+1),...
@@ -2146,7 +2225,7 @@ toc
                 aggregationInfo, ...
                 commonDataInfo, ...
                 periodIndex,...
-                1),...
+                commonDataInfo.aqi_obj(1)+1),...
                 x0, A, B, [], [], LB, UB, [], opt);
             %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\var_x_sol_new', 'x_sol');
         else

@@ -1,3 +1,0 @@
-aggrInfo/configuration/prepareApplyWholeDomain.txt
-aggrInfo/configuration/finalizeApplyWholeDomain.txt
-aggrInfo/configuration/restoreApplyWholeDomain.txt

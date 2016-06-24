@@ -25,7 +25,7 @@ vecPrecompF(isnan(vecPrecompF))=[];
 %else vecPrecompF(1)=[];
 
 if isempty(vecPrecompF)==0
-    vecPrecompF(1)=[];
+%     vecPrecompF(1)=[];
     for i=1:length(vecPrecompF)
         coeff=vecPrecompF(i); %could vary from 0.5 to 5_gaus and sigma_x_gaus
         sigma_y_gaus = NaN; %from 2 to rf/2 both sigma_x_gaus and sigma_x_gaus

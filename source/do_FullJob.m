@@ -9,6 +9,10 @@ function [intermediateResult resultInfo]=do_FullJob(refDataInfo, commonData, pre
  nPoll=size(precursorNames, 1);
  intermediateResult=interface_prepare(refDataInfo, commonData); 
  % 20160418 : Quadrant version
+ %if nPoll<>6 6;
+ %if commonData.firstGuess
+ %overwrite nPoll for FG 5 polls case
+ %nPoll=6;
  expectedOut=interface_get_ExpectedOutput(intermediateResult, commonData, nx, ny, nPoll);
  % 20160418 : First Guess version
  %expectedOut=FG_interface_get_ExpectedOutput(intermediateResult, commonData, nx, ny, nPoll);

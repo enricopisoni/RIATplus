@@ -1,3 +1,0 @@
-neuralNet_Prepare
-1
-0

@@ -196,10 +196,10 @@ for indexPareto=1:npoints
                 %MOD20160531ET Compute AQI at cle Level
                 % function [emi_low,emi_high,aqi_val2]=POST_FG_compute_aqi(x,SR,DD,indexSea, aqiIndex)
                 [~,~,aqi_val_CLE]=POST_FG_compute_aqi(sSet(indexPareto).X,SRInfo,...
-                    DSuperSet, indexSea, j, emi, commonDataInfo,sSet(1).X);
+                    DSuperSet, indexSea, j, emi, commonDataInfo,sSet(1).X,aggregationInfo);
                 % function [emi_low,emi_high,aqi_val2]=POST_FG_compute_aqi(x,SR,DD,indexSea, aqiIndex)
                 [emi_low,emi_high,aqi_val]=POST_FG_compute_aqi(sSet(indexPareto).X,SRInfo,...
-                    DSuperSet, indexSea, j, emi, commonDataInfo,sSet(1).X);
+                    DSuperSet, indexSea, j, emi, commonDataInfo,sSet(1).X, aggregationInfo);
                 %DSuperSet(indexSea).DSet(j), indexSea, j);
                 
                 %ENR20130417 - adding the model bias
@@ -902,10 +902,12 @@ fclose(fidStatus)
 
 %FUNCTION TO COMPUTE EMISSIONS AND AQIS VALUES PER CELL
         %MOD20160531ET
-    function [emi_low,emi_high,aqi_val2]=POST_FG_compute_aqi(x,SR,DD,indexSea, aqiIndex, emi, commonDataInfo,x_CLE)
+    function [emi_low,emi_high,aqi_val2]=POST_FG_compute_aqi(x,SR,DD,indexSea, aqiIndex, emi, commonDataInfo,x_CLE,aggregationInfo)
         
         %compute aqi related to an optimal solution
         %define low emissions matrix (to be used for emission computation)
+        [ncel, nx, ny]=calcCellNo('latlon', commonDataInfo);
+        
         global_data=commonDataInfo.special.global_data;
         flag_region_dom=commonDataInfo.domainInfo.flag_region_dom;
         
@@ -1023,11 +1025,28 @@ fclose(fidStatus)
         D=DD(aqiIndex).D;
         d=DD(aqiIndex).d;
         
-        E = D * sparse(x);
-        E = d - E;
-        E_full = full(E);
-        emis=E_full;
+        % 20160622 version with absolute values kton/year
+        %E = D * sparse(x);
+        %E = d - E;
+        %E_full = full(E);
+        %emis=E_full;
+        % 20160622 version with delta values emissions density
+        Escenario = D * sparse(x);
+        Escenario = d - Escenario;
+
+        if size(x,1) == size(aggregationInfo.fullCLE,1)
+            thisCLE=aggregationInfo.fullCLE;
+        else
+            thisCLE=x_CLE;
+        end
         
+        Ecle = D * sparse(thisCLE);
+        Ecle = d - Ecle;
+            
+        E_full = full(Ecle) - full(Escenario);
+        emis=E_full;
+
+        %%
         %optimizerCondition=commonDataInfo.optimizerCondition;
         %optimizerValues=commonDataInfo.optimizerValues;
 
@@ -1102,7 +1121,18 @@ fclose(fidStatus)
         %if jj eq 0 or 1
         if ((aqiIndex == 1) || (aqiIndex == 2)) aqi_per_cell=sum(emissioni(:,[1 3 5 6]).*thisAlpha(:,[1 3 5 6]),2); end
         if (aqiIndex == 6) aqi_per_cell=sum(emissioni(:,[1]).*thisAlpha(:,[1]),2); end
-        
+        %% 20160622 MM+EP
+        fName=strtrim(commonDataInfo.pathBc(indexSea).Bc(aqiIndex,:));
+        if (strcmp(fName,'-999') == 0)
+            % check compatibility of elements
+            concentration=firstguess_read_Bc(fName);
+            conc2=reshape(concentration',nx*ny,1);
+            conc2(flag_optim_dom==0)=[];
+            aqi_per_cell=conc2-aqi_per_cell;
+        else
+            aqi_per_cell=aqi_per_cell;
+        end
+        %%
         %change name to a better one!!! (too similar to caller...)
         %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint8_new','input_rete2');
         % 20160421 MM / EP SR / First guess Version

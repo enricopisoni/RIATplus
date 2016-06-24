@@ -68,9 +68,9 @@ warning('off','all')
 %new MM
 
 %commonDataInfo=load_CommonDataInfo(f1, 'init');
-commonDataInfo=load_CommonDataInfo(f1, f2);%, 'init');
+aggregationInfo=load_AggregationInfo(f2);
+commonDataInfo=load_CommonDataInfo(f1, aggregationInfo.type);
 
-aggregationInfo=load_AggregationInfo(commonDataInfo.aggType, commonDataInfo.aggConfigurationFiles);
 %new MM end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -263,11 +263,11 @@ for k=indini:indfini %year, winter, summmer
                 %aggregationInfo=interface_setAggregationInfo(aggregationInfo);
                 commonDataInfo=interface_new_fill_common_data_info(commonDataInfo, k, indaqi, aggregationInfo);
                 
-%                 if isequal(aggregationInfo.type, 'FIRSTGUESS')
-%                     commonDataInfo=firstguess_fill_commonDataInfo(commonDataInfo, k, indaqi);
-%                 else
-%                     commonDataInfo=quadrant_fill_commonDataInfo(commonDataInfo, k, indaqi);
-%                 end
+                %                 if isequal(aggregationInfo.type, 'FIRSTGUESS')
+                %                     commonDataInfo=firstguess_fill_commonDataInfo(commonDataInfo, k, indaqi);
+                %                 else
+                %                     commonDataInfo=quadrant_fill_commonDataInfo(commonDataInfo, k, indaqi);
+                %                 end
                 
                 [D,d,Dp,dp]=INITaggregation(emi,global_data,...
                     base_emi_low, base_emi_high, base_emi_low_noc,...
@@ -341,16 +341,38 @@ emi_red(1:nc,1:np,1:ncv)=0;
 emi_rem(1:nc,1:np)=0;
 
 %loop over cells to create emission matrices
+
+if isequal(aggregationInfo.type, 'FIRSTGUESS')
+    % load
+    areas=importdata(commonDataInfo.dirs.pathArea);
+    areaIn=areas.data(:,5);
+    areaOut=areas.data(:,6);
+    %put 1 in the two variables, to avoid division per zero
+    %     areaIn(areaIn==0)=1;
+    %     areaOut(areaOut==0)=1;
+else
+    areaIn=repmat(1,length(flag_region_dom));
+    areaOut=repmat(1,length(flag_region_dom));
+end
 for i=1:length(flag_region_dom)
     
     %case of cells without optimization domain
     %emission order: NOX, COV, NH3, PM10, PM25, SO2.
     if flag_region_dom(i)==0
-        
+        % remember to cancel...
+        %         i
         %INITIAL EMISSIONS
         %case areal and point summed:
         if areal_point==0
-            emi_rem(i,:)=base_emi_low(i,:)+base_emi_high(i,:);
+            %old version
+            %emi_rem(i,:)=base_emi_low(i,:)+base_emi_high(i,:);
+            % new Version
+            nArea=repmat(areaOut(i), 1, np)+repmat(areaIn(i), 1, np);
+            if sum(nArea)==0
+                nArea=repmat(1,1,np);
+            end
+            emi_rem(i,:)=(base_emi_low(i,:)+base_emi_high(i,:))./nArea;
+            % only for FIRST GUESS
             %case areal and point separated
         elseif areal_point==1
             emi_rem_low(i,:)=base_emi_low(i,:);
@@ -363,13 +385,22 @@ for i=1:length(flag_region_dom)
         %define emission matrix
         emi_red_tmp{i}=emi{i,2}(1:ncv,1:6);
         %compute emissions*RE
-        emi_red(i,1:np,1:ncv)=(emi_red_tmp{i}.*re)';
+        % working version
+        %emi_red(i,1:np,1:ncv)=(emi_red_tmp{i}.*re)';
+        % new version
+        nAreaIn=repmat(areaIn(i), ncv, np);
+        emi_red(i,1:np,1:ncv)=((emi_red_tmp{i}.*re)./nAreaIn)';
         
         %INITIAL EMISSIONS
         %compute final component of D matrix
         if areal_point==0
-            emi_rem(i,:)=base_emi_low(i,:)+base_emi_high(i,:)+...
-                base_emi_low_noc(i,:)+base_emi_high_noc(i,:);
+            % working version
+            %emi_rem(i,:)=base_emi_low(i,:)+base_emi_high(i,:)+...
+            %    base_emi_low_noc(i,:)+base_emi_high_noc(i,:);
+            % new version
+            nArea=repmat(areaIn(i), 1, np)+repmat(areaOut(i), 1, np);
+            emi_rem(i,:)=(base_emi_low(i,:)+base_emi_high(i,:)+...
+                base_emi_low_noc(i,:)+base_emi_high_noc(i,:))./nArea;
             %case areal and point separated
         elseif areal_point==1
             emi_rem_low(i,:)=base_emi_low(i,:)+...
@@ -395,6 +426,7 @@ if areal_point==0
     % res=do_FullJob(aggregationInfo.geometryDataInfo, commonDataInfo, emi_rem, orderedPolls, indicators, x, y, nx, ny, indiciMAT, indoptrep, 1, 1);
     % orderedPolls = {'NOX';'VOC';'NH3';'PM10';'PM25';'SO2'};
     % 20160418 MM First Guess case
+    
     orderedPolls=interface_new_get_pollutant_list(commonDataInfo);
     
     [jobIntermediate jobRes]=do_FullJob(aggregationInfo.geometryDataInfo, commonDataInfo, emi_rem, orderedPolls, indicators, x, y, nx, ny, indiciMAT, indoptrep, 1, 1);
@@ -432,9 +464,9 @@ end
 %loop to create matrix D
 %areal+point emissions
 if areal_point==0
+    orderedPolls = {'NOX_D';'VOC_D';'NH3_D';'PM10_D';'PM25_D';'SO2_D'};
     for i=1:size(global_data,1)
-        %new version
-        orderedPolls = {'NOX_D';'VOC_D';'NH3_D';'PM10_D';'PM25_D';'SO2_D'};
+        %new version        
         [jobIntermediate, jobRes]=do_FullJob(aggregationInfo.geometryDataInfo, commonDataInfo, emi_red(:,:,i), orderedPolls, indicators, x, y, nx, ny, indiciMAT, indoptrep, 0, 1);
         tmp=jobRes.finalGrid;
         

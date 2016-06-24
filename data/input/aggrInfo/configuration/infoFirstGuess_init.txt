@@ -1,3 +1,0 @@
-aggrInfo/configuration/prepareFirstGuess_init.txt
-aggrInfo/configuration/finalizeFirstGuess.txt
-aggrInfo/configuration/restoreFirstGuess.txt

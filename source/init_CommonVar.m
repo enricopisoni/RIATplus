@@ -22,6 +22,8 @@ nocID=cell2mat(C1{1}(12));           % no control technology ID
 genericInfo.AQINum=str2num(cell2mat(C1{1}(13))); % number of AQIs to consider
 genericInfo.nocID=str2num(nocID);                % nocID to be transformed in number
 
+if length(C1{1}) == 14 dirInfo.pathArea=cell2mat(C1{1}(14));    % path for area information file, containing area in sq km for each cell
+
 fclose(fid);
 
 end

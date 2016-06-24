@@ -1,5 +1,7 @@
-function [aggregationInfo]=load_AggregationInfo(type,configurationFiles)
+function [aggregationInfo]=load_AggregationInfo(confFile)
 
+ [type,configurationFiles]=init_ConfigurationVar(confFile);
+ 
  commonDataInfo=load_AggregationDataSetting(configurationFiles.commonInfoFile);
  geometryDataInfo=load_AggregationDataSetting(configurationFiles.geometryInfoFile);
  mathDataInfo=load_AggregationDataSetting(configurationFiles.mathInfoFile);
