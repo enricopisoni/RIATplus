@@ -2195,8 +2195,8 @@ toc
             % 20160421 First guess setting
             if isequal(aggregationInfo.type, 'FIRSTGUESS')
                 D=firstguess_get_aqi_D(aggregationInfo.geometryIntermediateData, 1);
-                sum(sum(D.D))
-                sum(D.d)
+%                 sum(sum(D.D))
+%                 sum(D.d)
                 bc=1;
                 % 20160421 First guess setting
                 nn=1;

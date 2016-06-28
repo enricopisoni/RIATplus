@@ -164,12 +164,6 @@ livelliAQI={0:5:45,0:5:45,10000:5000:90000,1000:250:6000,0:5:45,0:5:45,0:1:50};
 % OPERA EMR
 % livelliAQI={0:1:25,0:1:20,30000:2500:70000,5000:250:9000,90:2.5:120,0:2.5:35,0:2.5:35};
 
-%MOD20160531ET
- % managing the fact that PAD and ACD are different
- indpad=(flag_optim_dom==1 | flag_optim_dom==2);
- indacd=logical(flag_aqi_dom(indpad));
- indreg=(flag_region_dom==1 | flag_region_dom==2);
- indacd_pad=logical(flag_aqi_dom(indpad));
  %create sSet to contain a solution with AQIs filtered on ACD domain
 sSet_acd=sSet;
 %MOD20160531ET
@@ -262,7 +256,18 @@ for indexPareto=1:npoints
                     strcat('maps_aqi/',nomeaqi{j},nomesea{indexSea}),strcat(nomeaqi{j},nomesea{indexSea},ylab(1,j)),...
                     indexPareto,outdir,pathprb,pathpci,flag_region_dom,detailresults);
                                 %MOD20160531ET
-                                
+                                                                
+                %MOD20160531ET
+                % managing the fact that PAD and ACD are different
+                indpad=(flag_optim_dom==1 | flag_optim_dom==2);
+                indacd=logical(flag_aqi_dom(indpad));
+                indreg=(flag_region_dom==1 | flag_region_dom==2);
+                indacd_pad=logical(flag_aqi_dom(indpad));
+
+                % population average
+                indpop=pop;
+                indpop(indpad==0)=[];
+                
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %UPDATE SSET WITH MODEL BIAS
                 aqi_per_cell=aqi_val;
@@ -271,6 +276,8 @@ for indexPareto=1:npoints
                 indisnan=find(isnan(aqi_per_cell));
                 if isempty(indisnan)==0
                     aqi_per_cell(isnan(aqi_per_cell))=[];
+                    indacd_pad(indisnan)=[];
+                    indpop(indisnan)=[];
                 end
                 
                 %MOD20160531ET
@@ -283,9 +290,7 @@ for indexPareto=1:npoints
                 T = ones(size(aqi_per_cell)) * cell_threshold_set(j);
                 sSet(indexPareto).AQIs(indexSea,j,2)=sum(aqi_per_cell > T);       
                 sSet_acd(indexPareto).AQIs(indexSea,j,2)=sum(aqi_per_cell(indacd_pad,1) > T(indacd_pad,1));   %over ACD domain (for Pareto)
-                % population average
-                indpop=pop;
-                indpop(indpad==0)=[];
+
                 %UNIBS(ET)20131002 - Erase cells outside regional domain
                 sSet(indexPareto).AQIs(indexSea,j,3)=sum(aqi_per_cell.*indpop)/sum(indpop);
                 sSet_acd(indexPareto).AQIs(indexSea,j,3)=sum(aqi_per_cell(indacd_pad,1).*indpop(indacd_pad,1))/sum(indpop(indacd_pad,1));%over ACD domain (for Pareto)
@@ -1119,8 +1124,13 @@ fclose(fidStatus)
         
         %from the SR netcdf, use only NOx(1), NH3(3), PM25(5), SO2(6)
         %if jj eq 0 or 1
-        if ((aqiIndex == 1) || (aqiIndex == 2)) aqi_per_cell=sum(emissioni(:,[1 3 5 6]).*thisAlpha(:,[1 3 5 6]),2); end
-        if (aqiIndex == 6) aqi_per_cell=sum(emissioni(:,[1]).*thisAlpha(:,[1]),2); end
+%         if ((aqiIndex == 1) || (aqiIndex == 2)) aqi_per_cell=sum(emissioni(:,[1 3 5 6]).*thisAlpha(:,[1 3 5 6]),2); end
+%         if (aqiIndex == 6) aqi_per_cell=sum(emissioni(:,[1]).*thisAlpha(:,[1]),2); end
+        if (aqiIndex == 1) aqi_per_cell=sum(emissioni(:,[1 3 4 6]).*thisAlpha(:,[1 3 4 6]),2); end %nox,nh3,pm10,so2
+        if (aqiIndex == 2) aqi_per_cell=sum(emissioni(:,[1 3 5 6]).*thisAlpha(:,[1 3 5 6]),2); end %nox,nh3,pm25,so2
+        if (aqiIndex == 6) aqi_per_cell=sum(emissioni(:,[1]).*thisAlpha(:,[1]),2); end             %nox
+        
+        
         %% 20160622 MM+EP
         fName=strtrim(commonDataInfo.pathBc(indexSea).Bc(aqiIndex,:));
         if (strcmp(fName,'-999') == 0)

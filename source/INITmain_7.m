@@ -351,8 +351,8 @@ if isequal(aggregationInfo.type, 'FIRSTGUESS')
     %     areaIn(areaIn==0)=1;
     %     areaOut(areaOut==0)=1;
 else
-    areaIn=repmat(1,length(flag_region_dom));
-    areaOut=repmat(1,length(flag_region_dom));
+    areaIn=repmat(1,1,length(flag_region_dom))';%repmat(1,length(flag_region_dom));
+    areaOut=repmat(1,1,length(flag_region_dom))';%repmat(1,length(flag_region_dom));
 end
 for i=1:length(flag_region_dom)
     
