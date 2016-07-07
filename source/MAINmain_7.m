@@ -1004,7 +1004,7 @@ elseif commonDataInfo.optim_flags.mode_ce_mo==1   %cost-effectiveness
     %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint15d_new', 'A1','B1','LB','UB','x0');
     if (isequal(strtrim(aggregationInfo.type),'FIRSTGUESS')==1)
     %if isequal(aggregationInfo.type, 'FIRSTGUESS')
-        fName=strtrim(commonDataInfo.pathANN(1).ANNs(1,:));
+        fName=strtrim(commonDataInfo.pathANN(1).ANNs(commonDataInfo.aqi_obj+1,:));
         aggregationInfo.firstguess=0;
         if (strcmp(fName,'-999') == 0)
             [alpha, omega, radius, flatWeight, pollutantList]=firstguess_read(fName);
@@ -1046,7 +1046,7 @@ elseif commonDataInfo.optim_flags.mode_ce_mo==2   % scenario mode
     % 20130402 - arADSdet is a variable used for the detailed scenario mode...it
     % has to contain AR values between 0 and 1
     if isequal(aggregationInfo.type, 'FIRSTGUESS')
-        fName=strtrim(commonDataInfo.pathANN(1).ANNs(1,:));
+        fName=strtrim(commonDataInfo.pathANN(1).ANNs(commonDataInfo.aqi_obj+1,:));
         aggregationInfo.firstguess=0;
         if (strcmp(fName,'-999') == 0)
             [alpha, omega, radius, flatWeight, pollutantList]=firstguess_read(fName);

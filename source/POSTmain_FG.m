@@ -184,8 +184,21 @@ for indexPareto=1:npoints
                 %20160422 (MM) - Quadrant/NN Version
                 %[emi_low,emi_high,aqi_val]=POSTcompute_aqi(sSet(indexPareto).X,nnSuperSet(indexSea).nnSet(j),...
                 %    DSuperSet(indexSea).DSet(j),bcSuperSet(indexSea).bcSet(j));
-                SRInfo=aggregationInfo.firstguess;
+%                 SRInfo=aggregationInfo.firstguess;
                 % calling:
+                
+                %REPLACING LINE 187 TO CONSIDER VARYING SR
+                fName=strtrim(commonDataInfo.pathANN(indexSea).ANNs(j,:));
+                aggInfo.firstguess=0;
+                if (strcmp(fName,'-999') == 0)
+                    [alpha, omega, radius, flatWeight, pollutantList]=firstguess_read(fName);
+                    SRInfo.alpha=alpha;
+                    SRInfo.omega=omega;
+                    SRInfo.radius=radius;
+                    SRInfo.flatWeight=flatWeight;
+                    SRInfo.pollutantList=pollutantList;
+                end
+                %REPLACING LINE 187 TO CONSIDER VARYING SR
                 
                 %MOD20160531ET Compute AQI at cle Level
                 % function [emi_low,emi_high,aqi_val2]=POST_FG_compute_aqi(x,SR,DD,indexSea, aqiIndex)
@@ -1000,6 +1013,7 @@ fclose(fidStatus)
                     emiRed(sa,1:6)=sum(gdl_emibase(:,1:6).*gdl_re(:,:).*gdl_ar(:,:),1); %reduced emissions
                 end
                 emi_low(i,:)=base_emi_low(i,:)+base_emi_low_noc(i,:)-sum(emiRed);
+                sum(emiRed)
                 
                 gdh=global_data(global_data(:,5)==2,:);
                 gdh_sa=gdh(:,[2 3]);
@@ -1098,8 +1112,13 @@ fclose(fidStatus)
             end
         
         %input_rete2=emissioni';
-        alpha=aggregationInfo.firstguess.alpha;
-        omega=aggregationInfo.firstguess.omega;
+%         alpha=aggregationInfo.firstguess.alpha;
+%         omega=aggregationInfo.firstguess.omega;
+        %READ CORRECT SR
+        alpha=SR.alpha;
+        omega=SR.omega;
+        %READ CORRECT SR
+        
         %change dimensions of alpha and omega to be coherent with emissions
         alpha=permute(alpha,[2 1 3]);
         omega=permute(omega,[2 1 3]);
