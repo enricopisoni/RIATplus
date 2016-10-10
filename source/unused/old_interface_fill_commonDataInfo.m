@@ -1,4 +1,4 @@
-function [ setInfo  ] = interface_fill_commonDataInfo( commonData, aqiIndex, periodIndex)
+function [ setInfo  ] = old_interface_fill_commonDataInfo( commonData, aqiIndex, periodIndex)
 
 stringToRun='';
 stringToRun=strcat(stringToRun, refInfo.fill_CommonDataInfoFunction);

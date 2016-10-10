@@ -5,10 +5,10 @@ function [ finalInfo ] = firstguess_Finalize( refInfo, intermediateResult, commo
 dimx=nx;
 dimy=ny;
 valori_emi=precursor;
-rad=commonData.firstguess.radius;
+rad=commonData.extraInfo.radius;
 pollIndex=indicators;
-alpha=commonData.firstguess.alpha;
-omega=commonData.firstguess.omega;
+alpha=commonData.extraInfo.alpha;
+omega=commonData.extraInfo.omega;
 %change dimensions of alpha and omega to be coherent with emissions
 alpha=permute(alpha,[2 1 3]);
 omega=permute(omega,[2 1 3]);

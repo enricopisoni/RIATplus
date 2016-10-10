@@ -172,13 +172,15 @@ for k=indini:indfini %year, winter, summmer
         
         pop=commonDataInfo.domainData.data(:,5); %population
     end
-    %     stepsize=max(coordinate(2,1)-coordinate(1,1),coordinate(2,2)-coordinate(1,2));
-    %
-    if isequal(aggregationInfo.type, 'FIRSTGUESS')
-        [ncel, nx, ny]=calcCellNo('latlon', commonDataInfo);
-    else
-        [ncel, nx, ny]=calcCellNo('utm', commonDataInfo);
-    end
+    %% from here
+%     if isequal(aggregationInfo.type, 'FIRSTGUESS')
+%        [ncel, nx, ny]=calcCellNo('latlon', commonDataInfo);
+%     else
+%        [ncel, nx, ny]=calcCellNo('utm', commonDataInfo);
+%     end
+    %% to here
+    %% replaced by MM 2016/08/26
+    [ncel, nx, ny]=interfaceF_getCellInfo(aggregationInfo.type, commonDataInfo);
     
     %load cells emissions
     %emi: emissions of the starting case (2 rows in the case of cells
@@ -261,7 +263,7 @@ for k=indini:indfini %year, winter, summmer
                 %    base_emi_high_noc,flag_optim_dom,nx,ny,strtrim(pathANN(k).ANNs(indaqi,:)),optim_flags.areal_point,...
                 %    aggregationInfo);
                 %aggregationInfo=interface_setAggregationInfo(aggregationInfo);
-                commonDataInfo=interface_new_fill_common_data_info(commonDataInfo, k, indaqi, aggregationInfo);
+                commonDataInfo=interface_fill_common_data_info(commonDataInfo, k, indaqi, aggregationInfo);
                 
                 %                 if isequal(aggregationInfo.type, 'FIRSTGUESS')
                 %                     commonDataInfo=firstguess_fill_commonDataInfo(commonDataInfo, k, indaqi);
@@ -321,7 +323,7 @@ re=global_data(:,6:11)/100; %removal efficiencies
 % 20160418: MM
 % set to 1 with SR/Sherpa/First Guess mode
 
-quad=interface_new_get_quadrant(aggregationInfo);
+quad=interface_get_quadrant(aggregationInfo);
 % if isequal(aggregationInfo.type, 'FIRSTGUESS')
 %     quad =1;
 % else
@@ -342,18 +344,23 @@ emi_rem(1:nc,1:np)=0;
 
 %loop over cells to create emission matrices
 
-if isequal(aggregationInfo.type, 'FIRSTGUESS')
-    % load
-    areas=importdata(commonDataInfo.dirs.pathArea);
-    areaIn=areas.data(:,5);
-    areaOut=areas.data(:,6);
-    %put 1 in the two variables, to avoid division per zero
-    %     areaIn(areaIn==0)=1;
-    %     areaOut(areaOut==0)=1;
-else
-    areaIn=repmat(1,1,length(flag_region_dom))';%repmat(1,length(flag_region_dom));
-    areaOut=repmat(1,1,length(flag_region_dom))';%repmat(1,length(flag_region_dom));
-end
+%% from here
+% if isequal(aggregationInfo.type, 'FIRSTGUESS')
+%     % load
+%     areas=importdata(commonDataInfo.dirs.pathArea);
+%     areaIn=areas.data(:,5);
+%     areaOut=areas.data(:,6);
+%     %put 1 in the two variables, to avoid division per zero
+%     %     areaIn(areaIn==0)=1;
+%     %     areaOut(areaOut==0)=1;
+% else
+%     areaIn=repmat(1,1,length(flag_region_dom))';%repmat(1,length(flag_region_dom));
+%     areaOut=repmat(1,1,length(flag_region_dom))';%repmat(1,length(flag_region_dom));
+% end
+    %% to here
+    %% replaced by MM 2016/08/26
+[areaIn, areaOut]=interfaceF_getAreas(aggregationInfo.type, commonDataInfo.dirs.pathArea, flag_region_dom);
+
 for i=1:length(flag_region_dom)
     
     %case of cells without optimization domain
@@ -427,7 +434,7 @@ if areal_point==0
     % orderedPolls = {'NOX';'VOC';'NH3';'PM10';'PM25';'SO2'};
     % 20160418 MM First Guess case
     
-    orderedPolls=interface_new_get_pollutant_list(commonDataInfo);
+    orderedPolls=interface_get_pollutant_list(commonDataInfo);
     
     [jobIntermediate jobRes]=do_FullJob(aggregationInfo.geometryDataInfo, commonDataInfo, emi_rem, orderedPolls, indicators, x, y, nx, ny, indiciMAT, indoptrep, 1, 1);
     ddsparse=jobRes.finalGrid;

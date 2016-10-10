@@ -189,7 +189,7 @@ for indexPareto=1:npoints
                 
                 %REPLACING LINE 187 TO CONSIDER VARYING SR
                 fName=strtrim(commonDataInfo.pathANN(indexSea).ANNs(j,:));
-                aggInfo.firstguess=0;
+                aggInfo.extraInfo=0;
                 if (strcmp(fName,'-999') == 0)
                     [alpha, omega, radius, flatWeight, pollutantList]=firstguess_read(fName);
                     SRInfo.alpha=alpha;
@@ -398,7 +398,7 @@ strStatus='PROGRESSION: Post-procesing part finished.';
 disp(strStatus);
 fprintf(fidStatus, '%s\n',strStatus);
 % fprintf(fidStatus, '%s\n','Post-procesing part finished.');
-fclose(fidStatus)
+fclose(fidStatus);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -924,7 +924,8 @@ fclose(fidStatus)
         
         %compute aqi related to an optimal solution
         %define low emissions matrix (to be used for emission computation)
-        [ncel, nx, ny]=calcCellNo('latlon', commonDataInfo);
+        [ncel, nx, ny]=interfaceF_getCellInfo(aggregationInfo.type, commonDataInfo);
+        %[ncel, nx, ny]=calcCellNo('latlon', commonDataInfo);
         
         global_data=commonDataInfo.special.global_data;
         flag_region_dom=commonDataInfo.domainInfo.flag_region_dom;

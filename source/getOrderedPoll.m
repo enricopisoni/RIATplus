@@ -8,7 +8,7 @@ function [pollList]= firstguess_getOrderedPoll(commonDataInfo, aggregationInfo, 
  %[net]=net_read(fName);
  % commonDataInfo.radius=net.icells;
  % 20160418: MM & EP regression input
- pollList=commonDataInfo.firstguess.pollutantList;
+ pollList=commonDataInfo.extraInfo.pollutantList;
  %[alpha, omega, radius, flatWeight, pollutantList]=firstguess_read(fName);
  %commonDataInfo.firstguess.pollutantList=pollutantList;
  %commonDataInfo.firstguess.alpha=alpha;

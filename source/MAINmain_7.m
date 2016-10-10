@@ -1,27 +1,11 @@
 function []=MAINmain_7(f1,f2,f3)
 
-%MM 2015
-%%Issue(s)
-% Done
-% _added a line in flag_optim_path file
-% _added a folder (configuration)
-% _implemented interface approach (you implement physical code for your
-% specific solution, but the abstract layer is always the same)
-% ToDo Both
-% _test code on different input specific input files (needed for each style of run)
-% _check means of variable Dd_(p)_DOptSet (neuralNet_get_Dd_DOptSet function)
-% _check means of variable Dd_DOptSet (neuralNet_get_Dd_DOptSet function)
-% _check common input files (needed for each style of run)
-% _check specific input files (needed for specific style of run)
-% _check rightness of input->output variables for emissionAggregationType (agg shape->weight to assign)
-% _check rightness of input->output variables for emissionModelUseType (each cell or all the same)
-% _check rightness of input->output variables for emissionModelType (nn or regression)
-% _check rightness of input->output variables for emissionAbsoluteDeltaValues (concentration or emission)
 % ToDo Mirko
-% _integrate new "client side" version (domain info loading from text file)
-% _link (files, variable...) between init and main
-% _gaussian weight assignements AND regression to compute single cell value
-% _multiple Ring weight assignements AND ?? to compute single cell value
+% _integrate multi p approach (error)
+% _integrate sa approach (error)
+% _add comments
+% _remove redunant routines (where possible)
+% _...
 
 %End
 
@@ -39,6 +23,8 @@ function []=MAINmain_7(f1,f2,f3)
 %main program
 %to run program write:
 % MAINmain('inputOPERAaspa/flag_optim_path.txt','inputOPERAaspa/flag_optim_path_postproc.txt')
+% MM 2016/09/26
+% MAINmain_7('..\..\data\input\data_emr\run\domain_mo\flag_optim_path.txt','..\..\data\input\data_emr\run\domain_mo\flag_optim_path_postproc.txt','..\..\data\input\aggrInfo\aggregated_qnn_configuration_main.txt')
 
 %load configuration files
 % f1='inputOPERAaspa/flag_optim_path.txt';
@@ -232,9 +218,9 @@ warning off MATLAB:MKDIR:DirectoryExists
 % pathextoth=cell2mat(c1{1}(4));          %coefficient to compute external costs
 % pathprb=cell2mat(c1{1}(5));             %regional boundaries file
 % pathpci=cell2mat(c1{1}(6));             %cities file
-% pathMB=cell2mat(c1{1}(7));              %model bias 
+% pathMB=cell2mat(c1{1}(7));              %model bias
 % fclose(fid);
-% 
+%
 % %define some variables to save results
 % nomeaqi={'PM10','PM25','AOT40','SOMO35','MAX8H','NO2','PM10dailyExceed'};
 % nomeagg={'_MEAN','_THRE','_WEIGMEAN'};
@@ -248,25 +234,9 @@ warning off MATLAB:MKDIR:DirectoryExists
 %model_bias_data=importdata(pathMB);
 %end test
 
-%20160616 MM
-% new version
+% MM 20160616
 aggregationInfo=load_AggregationInfo(f3);
 commonDataInfo=load_CommonDataInfo(f1, aggregationInfo.type);
-% end previous version
-
-% MM previous version
-%commonDataInfo=load_CommonDataInfo(f1,f3);
-%aggregationInfo=load_AggregationInfo(commonDataInfo.aggType, commonDataInfo.aggConfigurationFiles);
-% end previous version
-%20160616 MM
-
-%[dirs, info]=init_CommonVar(f1, 'main');
-
-%new MM
-%[configurationFiles]=init_ConfigurationVar(dirs.pathCONF);
-
-%aggregationInfo=load_AggregationInfo(configurationFiles);
-%new MM end
 
 %                       aqi_definition.txt
 
@@ -333,7 +303,6 @@ end
 [commonDataInfo]=init_Domain(commonDataInfo);
 commonDataInfo.special.xutm=commonDataInfo.domainInfo.special.xutm;
 commonDataInfo.special.yutm=commonDataInfo.domainInfo.special.yutm;
-%[domainData, domainInfo]=init_Domain(dirs.pathFOD);
 
 %load cells emissions
 %emi: emissions of the starting case (2 rows in the case of cells
@@ -349,15 +318,17 @@ pathEMI=commonDataInfo.dirs.pathEMI;
 if (commonDataInfo.optim_flags.mode_ce_mo==0 | commonDataInfo.optim_flags.mode_ce_mo==1 | commonDataInfo.optim_flags.mode_ce_mo==2)
     pathEMI=strcat(pathEMI,'TP1/');
 end
-%[emi]=MAINload_emi(commonDataInfo.domainInfo.ncel,pathEMI,commonDataInfo.domainInfo.flag_optim_dom,commonDataInfo.optim_flags.mode_ce_mo);
-%UNIBS(ET)20131001 - flag_optim_dom changed with flag_region_dom in input
-if isequal(aggregationInfo.type, 'FIRSTGUESS')
-        [ncel, nx, ny]=calcCellNo('latlon', commonDataInfo);
-else
-        [ncel, nx, ny]=calcCellNo('utm', commonDataInfo);
-end
 
-%[emi,flag_ADS_tp]=MAINload_emi(commonDataInfo.domainInfo.ncel,pathEMI,commonDataInfo.domainInfo.flag_region_dom,commonDataInfo.optim_flags.mode_ce_mo);
+%UNIBS(ET)20131001 - flag_optim_dom changed with flag_region_dom in input
+%% MM 2016/08/26: this block...
+% if isequal(aggregationInfo.type, 'FIRSTGUESS')
+%         [ncel, nx, ny]=calcCellNo('latlon', commonDataInfo);
+% else
+%         [ncel, nx, ny]=calcCellNo('utm', commonDataInfo);
+% end
+%% MM 20160826: ...is replaced by this call
+[ncel, nx, ny]=interfaceF_getCellInfo(aggregationInfo.type, commonDataInfo);
+
 [emi,flag_ADS_tp]=MAINload_emi(ncel,pathEMI,commonDataInfo.domainInfo.flag_region_dom,commonDataInfo.optim_flags.mode_ce_mo);
 commonDataInfo.special.flag_ADS_tp=flag_ADS_tp;
 %in case of RIAT, matrices and input are cut and flipped (due to an initial
@@ -393,15 +364,9 @@ end
 
 %load PM10 to PM25 relationship
 
-if (exist(commonDataInfo.dirs.pathPM, 'file') == 2) 
+if (exist(commonDataInfo.dirs.pathPM, 'file') == 2)
     pm10aveToExceed=load(commonDataInfo.dirs.pathPM);
 end
-%else
-%    pm10aveToExceed=[0,1;
-%end
-
-%if (strcmp(commonDataInfo.dirs.pathPM,'-1') == 0)
-
 
 %output file name
 nomeOUTPUT=commonDataInfo.dirs.pathOUF;
@@ -434,12 +399,15 @@ commonDataInfo.fidStatus=fidStatus;
 geometryIntermediateData=interface_prepare(aggregationInfo.geometryDataInfo, commonDataInfo);
 aggregationInfo.geometryIntermediateData=geometryIntermediateData;
 
-if isequal(aggregationInfo.type, 'FIRSTGUESS')
-    a=0;
-else
-    mathIntermediateData=interface_prepare(aggregationInfo.mathDataInfo, commonDataInfo);
-    aggregationInfo.mathIntermediateData=mathIntermediateData;
-end
+%% MM 20160826: this block...
+% if isequal(aggregationInfo.type, 'FIRSTGUESS')
+%     a=0;
+% else
+%     mathIntermediateData=interface_prepare(aggregationInfo.mathDataInfo, commonDataInfo);
+%     aggregationInfo.mathIntermediateData=mathIntermediateData;
+% end
+%% MM 2016/08/26: ...is replaced by this call
+aggregationInfo.mathIntermediateData=interfaceF_prepareMathDataInfo(aggregationInfo.type, aggregationInfo, commonDataInfo);
 
 if size(commonDataInfo.domainData.data,2)==6
     commonDataInfo.flag_region_dom=commonDataInfo.domainData.data(:,3); %regional domain
@@ -694,9 +662,9 @@ if (commonDataInfo.optim_flags.mode_ce_mo==0 | commonDataInfo.optim_flags.mode_c
     % 20120210 - EP - this function cut the technologies that does not have
     % impact on the problem dimension.
     % original version without parameter
-    %Update();
-    % MM version
-    nAggregationInfo=Update_(aggregationInfo, commonDataInfo);
+    % Update();
+    % MM 20160228 version
+    nAggregationInfo=Update(aggregationInfo, commonDataInfo);
     %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint3_new','A','A1','costconstr');
     aggregationInfo=0;
     aggregationInfo=nAggregationInfo;
@@ -720,23 +688,17 @@ if (commonDataInfo.optim_flags.mode_ce_mo==0 | commonDataInfo.optim_flags.mode_c
     disp(strStatus);
     fprintf(fidStatus, '%s\n',strStatus);
     
-    % original version
-    %sol_CLE = buildSolution(x_CLE_free, fixed_x, inhibited_x, ...
-    %    costconstr'*(x_CLE_free) + deltaCost, ...
-    %    costconstr'*(x_CLE_free) + deltaCost, ...
-    %    );
-    % end
-    % MM Version (two extra parameters)
-    sol_CLE = buildSolution_(x_CLE_free, fixed_x, inhibited_x, ...
+    % MM 20160228 Version (two extra parameters)
+    sol_CLE = buildSolution(x_CLE_free, fixed_x, inhibited_x, ...
         costconstr'*(x_CLE_free) + deltaCost, ...
         costconstr'*(x_CLE_free) + deltaCost, ...
         aggregationInfo, commonDataInfo);
-    % MM Version
+    % MM 20160228 Version
     solutionList = [solutionList, sol_CLE];
     
     solutionSet = [solutionSet, ...
         struct('BUDGET', sol_CLE.BUDGET, 'SOL_LIST', solutionList)];
-        
+    
 end
 %20130424 END THE PART SPECIFIC TO MO, CE, DETAILED SA
 
@@ -753,48 +715,32 @@ if commonDataInfo.optim_flags.mode_ce_mo==0       %multi-objective
     fprintf(fidStatus, '%s\n',strStatus);
     
     % compute best solution
-    %original code
-    %x_BEST_free = MAINcompute_sol(A,B,LB,UB,x0);
-    %MM new (aggregationInfo and period parameter added
-    %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint15a_new', 'A','B','LB','UB','x0');
-    if isequal(aggregationInfo.type, 'FIRSTGUESS')
-        %         pollN=size(commonDataInfo.pathANN(1).ANNs(:,:), 1);
-        %         for i = 1:pollN
-        %             fName=strtrim(commonDataInfo.pathANN(1).ANNs(i,:));
-        %             aggregationInfo.firstguess=0;
-        %             if (strcmp(fName,'-999') == 0)
-        %                 [alpha, omega, radius, flatWeight, pollutantList]=firstguess_read(fName);
-        %                 aggregationInfo.firstguess.alpha=alpha;
-        %                 aggregationInfo.firstguess.omega=omega;
-        %                 aggregationInfo.firstguess.radius=radius;
-        %                 aggregationInfo.firstguess.flatWeight=flatWeight;
-        %                 aggregationInfo.firstguess.pollutantList=pollutantList;
-        %                 break;
-        %             end
-        %         end
-        [alpha, omega, radius, flatWeight, pollutantList]=firstguess_getFirstValidInfo(commonDataInfo);
-        aggregationInfo.firstguess.alpha=alpha;
-        aggregationInfo.firstguess.omega=omega;
-        aggregationInfo.firstguess.radius=radius;
-        aggregationInfo.firstguess.flatWeight=flatWeight;
-        aggregationInfo.firstguess.pollutantList=pollutantList;
-        %A=aggregationInfo.fullA;
-        %B=aggregationInfo.fullB;
-        %LB=aggregationInfo.fullLB;
-        %UB=aggregationInfo.fullUB;
-    else
-        a=0;
-    end
-    x_BEST_free = MAINcompute_sol_(A,B,LB,UB,x0,aggregationInfo, commonDataInfo, commonDataInfo.aqi_horizon);
-    %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint24_new', 'x_BEST_free');
-    %end MM
+    % MM 20160228 new (aggregationInfo and period parameter added)
+    % save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint15a_new', 'A','B','LB','UB','x0');
+    %% MM 20160826: this block...
+    %     if isequal(aggregationInfo.type, 'FIRSTGUESS')
+    %         [alpha, omega, radius, flatWeight, pollutantList]=firstguess_getFirstValidInfo(commonDataInfo);
+    %         aggregationInfo.firstguess.alpha=alpha;
+    %         aggregationInfo.firstguess.omega=omega;
+    %         aggregationInfo.firstguess.radius=radius;
+    %         aggregationInfo.firstguess.flatWeight=flatWeight;
+    %         aggregationInfo.firstguess.pollutantList=pollutantList;
+    %         %A=aggregationInfo.fullA;
+    %         %B=aggregationInfo.fullB;
+    %         %LB=aggregationInfo.fullLB;
+    %         %UB=aggregationInfo.fullUB;
+    %     else
+    %         a=0;
+    %     end
+    %% MM 20160826: ...is replaced by this call
+    % (return 0 instead that a structure when nn/quadrant case)
+    aggregationInfo.extraInfo=interfaceF_fillFirstAggregationInfo(aggregationInfo.type, commonDataInfo);
     
-    %Original version
-    %     sol_BEST = buildSolution(x_BEST_free, fixed_x, inhibited_x, ...
-    %         costconstr'*(x_BEST_free) + deltaCost, ...
-    %         costconstr'*(x_BEST_free) + deltaCost);
-    % MM Version (one extra parameter)
-    sol_BEST = buildSolution_(x_BEST_free, fixed_x, inhibited_x, ...
+    x_BEST_free = MAINcompute_sol(A,B,LB,UB,x0,aggregationInfo, commonDataInfo, commonDataInfo.aqi_horizon);
+    %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint24_new', 'x_BEST_free');
+    
+    % MM 20160228 Version (one extra parameter)
+    sol_BEST = buildSolution(x_BEST_free, fixed_x, inhibited_x, ...
         costconstr'*(x_BEST_free) + deltaCost, ...
         costconstr'*(x_BEST_free) + deltaCost,...
         aggregationInfo, commonDataInfo);
@@ -832,18 +778,14 @@ if commonDataInfo.optim_flags.mode_ce_mo==0       %multi-objective
             fprintf(fidStatus, '%s\n',strStatus);
             
             % compute best solution
-            % MM Version (two extra parameters)
+            % MM 20160228 Version (two extra parameters)
             %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint15b_new', 'A1','B1','LB','UB','x0');
-            %x_sol_free = MAINcompute_sol_(A1,B1,LB,UB,x0,aggregationInfo, commonDataInfo,i);
             % last parameter IS NOT a season index
-            x_sol_free = MAINcompute_sol_(A1,B1,LB,UB,x0,aggregationInfo, commonDataInfo,commonDataInfo.aqi_horizon);
+            x_sol_free = MAINcompute_sol(A1,B1,LB,UB,x0,aggregationInfo, commonDataInfo,commonDataInfo.aqi_horizon);
             %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint26a_new', 'x_sol_free');
             
-            %             sol = buildSolution(x_sol_free, fixed_x, inhibited_x, ...
-            %                 costconstr'*(x_sol_free) + deltaCost, ...
-            %                 thres_cost);
-            % MM Version (one extra parameter)
-            sol = buildSolution_(x_sol_free, fixed_x, inhibited_x, ...
+            % MM 20160228 Version (one extra parameter)
+            sol = buildSolution(x_sol_free, fixed_x, inhibited_x, ...
                 costconstr'*(x_sol_free) + deltaCost, ...
                 thres_cost, aggregationInfo, commonDataInfo);
             %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint26b_new', 'sol');
@@ -938,16 +880,12 @@ if commonDataInfo.optim_flags.mode_ce_mo==0       %multi-objective
                 disp(strStatus);
                 fprintf(fidStatus, '%s\n',strStatus);
                 
-                %x_sol_free = MAINcompute_sol(A1,B1,LB,UB,x0);
-                % MM Version (one extra parameter)
+                % MM 20160228 Version (one extra parameter)
                 %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint15c_new', 'A1','B1','LB','UB','x0');
-                x_sol_free = MAINcompute_sol_(A1,B1,LB,UB,x0,aggregationInfo, commonDataInfo,commonDataInfo.aqi_horizon);
-                %                 sol = buildSolution(x_sol_free, fixed_x, inhibited_x, ...
-                %                     costconstr'*(x_sol_free) + deltaCost, ...
-                %                     thres_cost);
-                % MM Version (one extra parameter)
+                x_sol_free = MAINcompute_sol(A1,B1,LB,UB,x0,aggregationInfo, commonDataInfo,commonDataInfo.aqi_horizon);
+                % MM 20160228 Version (one extra parameter)
                 %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint27a_new', 'x_sol_free');
-                sol = buildSolution_(x_sol_free, fixed_x, inhibited_x, ...
+                sol = buildSolution(x_sol_free, fixed_x, inhibited_x, ...
                     costconstr'*(x_sol_free) + deltaCost, ...
                     thres_cost, aggregationInfo, commonDataInfo);
                 %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint27b_new', 'sol');
@@ -956,7 +894,6 @@ if commonDataInfo.optim_flags.mode_ce_mo==0       %multi-objective
                 
                 % possibily find multiple solutions to insert in
                 % solutionList by applying multistart - end
-                
                 
                 generatedSolutionSet = [generatedSolutionSet, ...
                     struct('BUDGET', thres_cost, 'SOL_LIST', solutionList)];
@@ -999,33 +936,36 @@ elseif commonDataInfo.optim_flags.mode_ce_mo==1   %cost-effectiveness
     fprintf(fidStatus, '%s\n',strStatus);
     
     %compute solution
-    %x_sol_free = MAINcompute_sol(A1,B1,LB,UB,x0);
-    % MM Version (one extra parameter)
     %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint15d_new', 'A1','B1','LB','UB','x0');
-    if (isequal(strtrim(aggregationInfo.type),'FIRSTGUESS')==1)
-    %if isequal(aggregationInfo.type, 'FIRSTGUESS')
-        fName=strtrim(commonDataInfo.pathANN(1).ANNs(commonDataInfo.aqi_obj+1,:));
-        aggregationInfo.firstguess=0;
-        if (strcmp(fName,'-999') == 0)
-            [alpha, omega, radius, flatWeight, pollutantList]=firstguess_read(fName);
-            aggregationInfo.firstguess.alpha=alpha;
-            aggregationInfo.firstguess.omega=omega;
-            aggregationInfo.firstguess.radius=radius;
-            aggregationInfo.firstguess.flatWeight=flatWeight;
-            aggregationInfo.firstguess.pollutantList=pollutantList;
-        end
-    else
-        a=0;
-    end
-    x_sol_free = MAINcompute_sol_(A1,B1,LB,UB,x0, aggregationInfo, commonDataInfo,commonDataInfo.aqi_horizon);
+    %% MM 20160826: this block...
+    %     if (isequal(strtrim(aggregationInfo.type),'FIRSTGUESS')==1)
+    %     %if isequal(aggregationInfo.type, 'FIRSTGUESS')
+    %         fName=strtrim(commonDataInfo.pathANN(1).ANNs(commonDataInfo.aqi_obj+1,:));
+    %         aggregationInfo.firstguess=0;
+    %         if (strcmp(fName,'-999') == 0)
+    %             [alpha, omega, radius, flatWeight, pollutantList]=firstguess_read(fName);
+    %             aggregationInfo.firstguess.alpha=alpha;
+    %             aggregationInfo.firstguess.omega=omega;
+    %             aggregationInfo.firstguess.radius=radius;
+    %             aggregationInfo.firstguess.flatWeight=flatWeight;
+    %             aggregationInfo.firstguess.pollutantList=pollutantList;
+    %         end
+    %     else
+    %         a=0;
+    %     end
+    %% MM 20160826: ...is replaced by this call
+    aggregationInfo.extraInfo=interfaceF_fillAggregationInfoFromFile(aggregationInfo.type, commonDataInfo.pathANN, 1, commonDataInfo.aqi_obj+1);
+    
+    % MM 20160228 Version (one extra parameter)
+    x_sol_free = MAINcompute_sol(A1,B1,LB,UB,x0, aggregationInfo, commonDataInfo,commonDataInfo.aqi_horizon);
     %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint28a_new', 'x_sol_free');
     
     %     sol = buildSolution(x_sol_free, fixed_x,
     %     inhibited_x, ...
     %         costconstr'*(x_sol_free) + deltaCost, ...
     %         thres_cost);
-    % MM Version (one extra parameter)
-    sol = buildSolution_(x_sol_free, fixed_x, ...
+    % MM 20160228 Version (extra parameters)
+    sol = buildSolution(x_sol_free, fixed_x, ...
         inhibited_x, ...
         costconstr'*(x_sol_free) + deltaCost, ...
         thres_cost, aggregationInfo, commonDataInfo);
@@ -1045,20 +985,24 @@ elseif commonDataInfo.optim_flags.mode_ce_mo==2   % scenario mode
     
     % 20130402 - arADSdet is a variable used for the detailed scenario mode...it
     % has to contain AR values between 0 and 1
-    if isequal(aggregationInfo.type, 'FIRSTGUESS')
-        fName=strtrim(commonDataInfo.pathANN(1).ANNs(commonDataInfo.aqi_obj+1,:));
-        aggregationInfo.firstguess=0;
-        if (strcmp(fName,'-999') == 0)
-            [alpha, omega, radius, flatWeight, pollutantList]=firstguess_read(fName);
-            aggregationInfo.firstguess.alpha=alpha;
-            aggregationInfo.firstguess.omega=omega;
-            aggregationInfo.firstguess.radius=radius;
-            aggregationInfo.firstguess.flatWeight=flatWeight;
-            aggregationInfo.firstguess.pollutantList=pollutantList;
-        end
-    else
-        a=0;
-    end
+    %% MM 20160826: this block...
+    %     if isequal(aggregationInfo.type, 'FIRSTGUESS')
+    %         fName=strtrim(commonDataInfo.pathANN(1).ANNs(commonDataInfo.aqi_obj+1,:));
+    %         aggregationInfo.firstguess=0;
+    %         if (strcmp(fName,'-999') == 0)
+    %             [alpha, omega, radius, flatWeight, pollutantList]=firstguess_read(fName);
+    %             aggregationInfo.firstguess.alpha=alpha;
+    %             aggregationInfo.firstguess.omega=omega;
+    %             aggregationInfo.firstguess.radius=radius;
+    %             aggregationInfo.firstguess.flatWeight=flatWeight;
+    %             aggregationInfo.firstguess.pollutantList=pollutantList;
+    %         end
+    %     else
+    %         a=0;
+    %     end
+    %% MM 20160826: ...is replaced by this call
+    aggregationInfo.extraInfo=interfaceF_fillAggregationInfoFromFile(aggregationInfo.type, commonDataInfo.pathANN, 1, commonDataInfo.aqi_obj+1);
+    
     x_sol=arADSdet/100;
     % in case of scenario mode, use arADSdet AR, from out_clemfr (last) column
     %routine "update" is not applied to data
@@ -1069,11 +1013,8 @@ elseif commonDataInfo.optim_flags.mode_ce_mo==2   % scenario mode
     disp(strStatus);
     fprintf(fidStatus, '%s\n',strStatus);
     
-    %     sol = buildSolution(x_sol, fixed_x_scenariomode, [], ...
-    %         originalcostconstr'*(x_sol), ...
-    %         originalcostconstr'*(x_sol));
-    % MM Version (one extra parameter)
-    sol = buildSolution_(x_sol, fixed_x_scenariomode, [], ...
+    % MM 20160228 Version (one extra parameter)
+    sol = buildSolution(x_sol, fixed_x_scenariomode, [], ...
         originalcostconstr'*(x_sol), ...
         originalcostconstr'*(x_sol), aggregationInfo, commonDataInfo);
     %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint29a_new', 'sol');
@@ -1092,7 +1033,7 @@ elseif commonDataInfo.optim_flags.mode_ce_mo==2   % scenario mode
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %AGGREGATED SCENARIO MODE
 elseif commonDataInfo.optim_flags.mode_ce_mo==3   %aggregated scenario analysis
-    %% MM: no quadrants needed
+    %% MM 20160228 : no quadrants info needed
     
     strStatus='PROGRESSION: computing the aggregated scenario analysis results...';
     disp(strStatus);
@@ -1106,12 +1047,16 @@ elseif commonDataInfo.optim_flags.mode_ce_mo==3   %aggregated scenario analysis
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %COMPUTE REDUCED EMISSIONS (BOTH AREAL AND POINT...WE EXPECT BOTH TYPE
     %OF FILES)
-    %conisder the seasons - yea, win, sum
-    if isequal(aggregationInfo.type, 'FIRSTGUESS')
-        [ncel, nx, ny]=calcCellNo('latlon', commonDataInfo);
-    else
-        [ncel, nx, ny]=calcCellNo('utm', commonDataInfo);
-    end
+    %% MM 20160826: this block...
+    %     if isequal(aggregationInfo.type, 'FIRSTGUESS')
+    %         [ncel, nx, ny]=calcCellNo('latlon', commonDataInfo);
+    %     else
+    %         [ncel, nx, ny]=calcCellNo('utm', commonDataInfo);
+    %     end
+    %% MM 20160826: ...is replaced by this call
+    [ncel, nx, ny]=interfaceF_getCellInfo(aggregationInfo.type, commonDataInfo);
+    
+    %consider the seasons - yea, win, sum
     for sea=1:3
         for i=1:ncel
             %emiCleRed contains both CLE {sea,1} and REDUCED {sea,2}
@@ -1179,28 +1124,31 @@ elseif commonDataInfo.optim_flags.mode_ce_mo==3   %aggregated scenario analysis
                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     %COMPUTE AQI PER CELL, RELATED TO INITIAL AND REDUCED CASES
                     %CONSTRAINTS ON ANNS IDENTIFICATION BOUNDS ARE CHECKED HERE
-                    if isequal(aggregationInfo.type, 'FIRSTGUESS')
-                        fName=strtrim(commonDataInfo.pathANN(ii).ANNs(jj,:));
-                        aggregationInfo.firstguess=0;
-                        if (strcmp(fName,'-999') == 0)
-                            [alpha, omega, radius, flatWeight, pollutantList]=firstguess_read(fName);
-                            aggregationInfo.firstguess.alpha=alpha;
-                            aggregationInfo.firstguess.omega=omega;
-                            aggregationInfo.firstguess.radius=radius;
-                            aggregationInfo.firstguess.flatWeight=flatWeight;
-                            aggregationInfo.firstguess.pollutantList=pollutantList;
-                        end
-                        emisP=0;
-                        NN=0;
-                        bcSet=0;
-                        aggregationInfo.mathInfo=0;
-                        [aqiCLEini]=firstguess_aggregated_scenario_mode(emiCleRed{ii,1}, aggregationInfo, commonDataInfo, ii,jj);
-                        [aqiCLEred]=firstguess_aggregated_scenario_mode(emiCleRed{ii,2}, aggregationInfo, commonDataInfo, ii,jj);
-                    else
-                        NN=neuralNet_get_nnSuperSet_indexed(aggregationInfo.mathIntermediateData, ii, jj);
-                        [aqiCLEini]=MAINaggregated_scenario_mode__(emiCleRed{ii,1}, NN,ii,jj, commonDataInfo, aggregationInfo);
-                        [aqiCLEred]=MAINaggregated_scenario_mode__(emiCleRed{ii,2}, NN,ii,jj, commonDataInfo, aggregationInfo);
-                    end
+                    %% MM 20160826: this block...
+                    %                     if isequal(aggregationInfo.type, 'FIRSTGUESS')
+                    %                         fName=strtrim(commonDataInfo.pathANN(ii).ANNs(jj,:));
+                    %                         aggregationInfo.firstguess=0;
+                    %                         if (strcmp(fName,'-999') == 0)
+                    %                             [alpha, omega, radius, flatWeight, pollutantList]=firstguess_read(fName);
+                    %                             aggregationInfo.firstguess.alpha=alpha;
+                    %                             aggregationInfo.firstguess.omega=omega;
+                    %                             aggregationInfo.firstguess.radius=radius;
+                    %                             aggregationInfo.firstguess.flatWeight=flatWeight;
+                    %                             aggregationInfo.firstguess.pollutantList=pollutantList;
+                    %                         end
+                    %                         emisP=0;
+                    %                         NN=0;
+                    %                         bcSet=0;
+                    %                         aggregationInfo.mathInfo=0;
+                    %                         [aqiCLEini]=firstguess_aggregated_scenario_mode(emiCleRed{ii,1}, aggregationInfo, commonDataInfo, ii,jj);
+                    %                         [aqiCLEred]=firstguess_aggregated_scenario_mode(emiCleRed{ii,2}, aggregationInfo, commonDataInfo, ii,jj);
+                    %                     else
+                    %                         NN=neuralNet_get_nnSuperSet_indexed(aggregationInfo.mathIntermediateData, ii, jj);
+                    %                         [aqiCLEini]=MAINaggregated_scenario_mode__(emiCleRed{ii,1}, NN,ii,jj, commonDataInfo, aggregationInfo);
+                    %                         [aqiCLEred]=MAINaggregated_scenario_mode__(emiCleRed{ii,2}, NN,ii,jj, commonDataInfo, aggregationInfo);
+                    %                     end
+                    %% MM 20160826: ...is replaced by this call
+                    [aqiCLEini, aqiCLEred]=interfaceF_getaqiCLEInfo(aggregationInfo.type, ii, jj, emiCleRed, aggregationInfo, commonDataInfo);
                     
                     %if AQI=#exceed > threshold
                     if(jj == 7)
@@ -1267,16 +1215,19 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % save results in mat file
-% 20160421 MM FG Vs quadrant/NN
-if isequal(aggregationInfo.type, 'FIRSTGUESS')
-    localnnSuperSet=0;
-    localDSuperSet=firstguess_get_aqi_D(aggregationInfo.geometryIntermediateData, 1);
-    localbcSuperSet=0;
-else
-    localnnSuperSet=interface_get_nnSuperSet(aggregationInfo.mathIntermediateData);
-    localDSuperSet=interface_get_DSuperSet(aggregationInfo.geometryIntermediateData);
-    localbcSuperSet=interface_get_bcSuperSet(aggregationInfo.mathIntermediateData);
-end
+% MM 20160421 : FG Vs quadrant/NN
+%% MM 20160826: this block...
+%  if isequal(aggregationInfo.type, 'FIRSTGUESS')
+%      localnnSuperSet=0;
+%      localDSuperSet=firstguess_get_aqi_D(aggregationInfo.geometryIntermediateData, 1);
+%      localbcSuperSet=0;
+%  else
+%      localnnSuperSet=interface_get_nnSuperSet(aggregationInfo.mathIntermediateData);
+%      localDSuperSet=interface_get_DSuperSet(aggregationInfo.geometryIntermediateData);
+%      localbcSuperSet=interface_get_bcSuperSet(aggregationInfo.mathIntermediateData);
+%  end
+%% MM 20160826: ...is replaced by this call
+[localnnSuperSet, localDSuperSet, localbcSuperSet]=interfaceF_getlocalSuperSet(aggregationInfo.type, aggregationInfo);
 save(nomeOUTPUT,'paretoSolutions','localDSuperSet','localnnSuperSet','solutionSet');
 toc
 
@@ -1288,33 +1239,37 @@ fprintf(fidStatus, '%s\n',strStatus);
 
 if commonDataInfo.optim_flags.mode_ce_mo<3
     % %postprocessing of results
-    % 20160421 MM FG Vs quadrant/NN
-    % Quadrant/NN
-    % FirstGuess
-if isequal(aggregationInfo.type, 'FIRSTGUESS')
-    localnnSuperSet=0;
-    localDSuperSet=firstguess_get_DSuperSet(aggregationInfo.geometryIntermediateData, 1);
-    localbcSuperSet=0;
-    % 20160422 : MM Version First Guess/SR Version
-    POSTmain_FG(f2,localDSuperSet,aggregationInfo,commonDataInfo.pathANN, commonDataInfo.flag_region_dom, flag_optim_dom, flag_aqi_dom,...
-        commonDataInfo.domainData.coordinate,emi,global_data,base_emi_low,base_emi_high,CLE, ...
-        base_emi_low_noc,base_emi_high_noc,commonDataInfo.dirs.pathOCM,paretoSolutions,...
-        commonDataInfo.optim_flags.areal_point,commonDataInfo.optim_flags.reg_net,commonDataInfo.dirs.pathOUF,pop,commonDataInfo.info.nocID,commonDataInfo.dirs.pathAR,pm10aveToExceed,...
-        commonDataInfo.cell_threshold_set,fidStatus,fidExit, commonDataInfo)
-else
-    % 20160422 : MM Version Quadrant/NN Version
-    localnnSuperSet=interface_get_nnSuperSet(aggregationInfo.mathIntermediateData);
-    localDSuperSet=interface_get_DSuperSet(aggregationInfo.geometryIntermediateData);
-    localbcSuperSet=interface_get_bcSuperSet(aggregationInfo.mathIntermediateData);
-    global_data=commonDataInfo.special.global_data;
-    POSTmain(f2,localnnSuperSet,localDSuperSet,localbcSuperSet,commonDataInfo.pathANN, commonDataInfo.flag_region_dom, flag_optim_dom, flag_aqi_dom,...
-        commonDataInfo.domainData.coordinate,emi,global_data,base_emi_low,base_emi_high,CLE, ...
-        base_emi_low_noc,base_emi_high_noc,commonDataInfo.dirs.pathOCM,paretoSolutions,...
-        commonDataInfo.optim_flags.areal_point,commonDataInfo.optim_flags.reg_net,commonDataInfo.dirs.pathOUF,pop,commonDataInfo.info.nocID,commonDataInfo.dirs.pathAR,pm10aveToExceed,...
-        commonDataInfo.cell_threshold_set,fidStatus,fidExit, commonDataInfo)
-end
+    % MM 20160421 : FG Vs quadrant/NN
+    %% MM 20160826: this block...
+%          if isequal(aggregationInfo.type, 'FIRSTGUESS')
+%              localnnSuperSet=0;
+%              localDSuperSet=firstguess_get_DSuperSet(aggregationInfo.geometryIntermediateData, 1);
+%              localbcSuperSet=0;
+%     %         % MM: 20160422 Version First Guess/SR Version
+%              POSTmain_FG(f2,localDSuperSet,aggregationInfo,commonDataInfo.pathANN, commonDataInfo.flag_region_dom, flag_optim_dom, flag_aqi_dom,...
+%                  commonDataInfo.domainData.coordinate,emi,global_data,base_emi_low,base_emi_high,CLE, ...
+%                  base_emi_low_noc,base_emi_high_noc,commonDataInfo.dirs.pathOCM,paretoSolutions,...
+%                  commonDataInfo.optim_flags.areal_point,commonDataInfo.optim_flags.reg_net,commonDataInfo.dirs.pathOUF,pop,commonDataInfo.info.nocID,commonDataInfo.dirs.pathAR,pm10aveToExceed,...
+%                  commonDataInfo.cell_threshold_set,fidStatus,fidExit, commonDataInfo)
+%          else
+%              % MM 20160422 : Version Quadrant/NN
+%              localnnSuperSet=interface_get_nnSuperSet(aggregationInfo.mathIntermediateData);
+%              localDSuperSet=interface_get_DSuperSet(aggregationInfo.geometryIntermediateData);
+%              localbcSuperSet=interface_get_bcSuperSet(aggregationInfo.mathIntermediateData);
+%              global_data=commonDataInfo.special.global_data;
+%              POSTmain(f2,localnnSuperSet,localDSuperSet,localbcSuperSet,commonDataInfo.pathANN, commonDataInfo.flag_region_dom, flag_optim_dom, flag_aqi_dom,...
+%                  commonDataInfo.domainData.coordinate,emi,global_data,base_emi_low,base_emi_high,CLE, ...
+%                  base_emi_low_noc,base_emi_high_noc,commonDataInfo.dirs.pathOCM,paretoSolutions,...
+%                  commonDataInfo.optim_flags.areal_point,commonDataInfo.optim_flags.reg_net,commonDataInfo.dirs.pathOUF,pop,commonDataInfo.info.nocID,commonDataInfo.dirs.pathAR,pm10aveToExceed,...
+%                  commonDataInfo.cell_threshold_set,fidStatus,fidExit, commonDataInfo)
+%          end
+    %% MM 20160826: ...is replaced by this call
+    interfaceF_launchPOSTMain(aggregationInfo.type, f2, aggregationInfo, commonDataInfo, flag_optim_dom, flag_aqi_dom, emi, global_data, base_emi_low, base_emi_high, CLE, ...
+        base_emi_low_noc,base_emi_high_noc,paretoSolutions,pop, pm10aveToExceed, fidStatus,fidExit, ...
+        localnnSuperSet, localDSuperSet, localbcSuperSet);
+    
     %end
-    % MM Version load locally needed structures...
+    % MM 20160228 : Version load locally needed structures...
     %POSTmain(f2,nnSuperSet,DSuperSet,pathANN,domainInfo.flag_optim_dom, domainInfo.flag_aqi_dom,...
     %     POSTmain(f2,localnnSuperSet,localDSuperSet,pathANN,domainInfo.flag_optim_dom, domainInfo.flag_aqi_dom,...
     %         domainData.coordinate,emi,global_data,base_emi_low,base_emi_high,CLE, ...
@@ -1539,13 +1494,12 @@ toc
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% MM Version (one extra parameter)
-    function newAgg = Update_(aggregationInfo, commonDataInfo)
+% MM 20160228 Version (one extra parameter)
+    function newAgg = Update(aggregationInfo, commonDataInfo)
         
         %if techs change emissions less than threshold (sum for all
         %pollutants) the techs are disregarded
         DOptSet=neuralNet_get_FullDOptSet(aggregationInfo.geometryIntermediateData);
-        %DOptSet=interfacet_get_FullDOptSet(aggregationInfo.geometryIntermediateData);
         %if techs change emissions less than threshold (sum for all
         %pollutants) the techs are disregarded
         threshold = 1e-6;
@@ -1559,7 +1513,7 @@ toc
             %in case of areal and point separated, D and d are only related to
             %areal emissions (the point infos Dp and dp will be used later on)
             pollN=size(commonDataInfo.pathANN(1).ANNs(:,:), 1);
-
+            
             D = DOptSet(ii).D;
             d = DOptSet(ii).d;
             
@@ -1674,14 +1628,17 @@ toc
         deltaCost = sum(costconstr.*(inhibited_x));
         
         % update of UB - keep only technologies to be optimized
+        % MM 20160926 : preserve info for aggregated scenario (FG)...
         aggregationInfo.fullUB=UB;
         UB = UB(final_active_technologies==1);
         
         % update of LB - keep only technologies to be optimized
+        % MM 20160926 : preserve info for aggregated scenario (FG)...
         aggregationInfo.fullLB=CLE;
         LB = LB(final_active_technologies==1);
         
         % update of CLE - keep only technologies to be optimized
+        % MM 20160926 : preserve info for aggregated scenario (FG)...
         aggregationInfo.fullCLE=CLE;
         CLE = CLE(final_active_technologies==1);
         
@@ -1713,8 +1670,8 @@ toc
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% MM Version (one extra parameter)
-    function sol = buildSolution_(x_free, fixed_x, inhibited_x, ...
+% MM 20160228 : Version (one extra parameter)
+    function sol = buildSolution(x_free, fixed_x, inhibited_x, ...
             cost, budget, aggInfo, commonDataInfo)
         
         % solution restoring - go back to full set of control variables
@@ -1743,49 +1700,53 @@ toc
         %computing the AQIS for the 3 temporal periods, 6 aqis, 3
         %aggregation types
         aqi = ones(3,commonDataInfo.info.AQINum,3) * -999;
-        %isDelta=interface_get_isDelta(aggInfo);
-        %isAggregated=interface_get_isAggregated(aggInfo);
         
         for ii = 1:3,
             for jj = 1:commonDataInfo.info.AQINum,
                 if (isequal(strtrim(commonDataInfo.pathANN(ii).ANNs(jj,:)),'-999')==0)
                     % MM Version (added D get from function and some parameters in the call)
-                    if isequal(aggregationInfo.type, 'FIRSTGUESS')
-                        % 20160420 MM temporary setting
-                        aggInfo.mathIntermediateData=0;
-                        fName=strtrim(commonDataInfo.pathANN(ii).ANNs(jj,:));
-                        aggInfo.firstguess=0;
-                        if (strcmp(fName,'-999') == 0)
-                            [alpha, omega, radius, flatWeight, pollutantList]=firstguess_read(fName);
-                            aggInfo.firstguess.alpha=alpha;
-                            aggInfo.firstguess.omega=omega;
-                            aggInfo.firstguess.radius=radius;
-                            aggInfo.firstguess.flatWeight=flatWeight;
-                            aggInfo.firstguess.pollutantList=pollutantList;
-                        end
-                        cycleNN=0;
-                        cyclebc=0;
-                        cycleD=quadrant_get_DSuperSet_indexed(aggInfo.geometryIntermediateData, ii, jj);
-                        % FG version
-                        aqi(ii,jj,1) = MAINcompute_aqi_(x, cycleNN, cycleD, 0,commonDataInfo.cell_threshold_set(jj),jj-1,1, cyclebc, aggInfo, commonDataInfo, ii, jj);
-                        % FG version only year period (third index=1)...
-                        aqi(ii,jj,2) = MAINcompute_aqi_(x, cycleNN, cycleD, 1,commonDataInfo.cell_threshold_set(jj),jj-1,1, cyclebc, aggInfo, commonDataInfo, ii, jj);
-                        % FG version only year period (third index=1)...
-                        aqi(ii,jj,3) = MAINcompute_aqi_(x, cycleNN, cycleD, 2,commonDataInfo.cell_threshold_set(jj),jj-1,1, cyclebc, aggInfo, commonDataInfo, ii, jj);
-                    else
-                        %cycleD=interface_get_DSuperSetFunction_indexed(aggInfo.mathIntermediateData, ii, jj);
-                        pathANN=commonDataInfo.pathANN;
-                        fName=strtrim(pathANN(ii).ANNs(jj,:));
-                        [net]=net_read(fName);
-                        commonDataInfo.radius=net.icells;
-                        cycleD=quadrant_get_DSuperSet_indexed(aggInfo.geometryIntermediateData, ii, jj);
-                        cycleNN=neuralNet_get_nnSuperSet_indexed(aggInfo.mathIntermediateData, ii, jj);
-                        cyclebc=quadrant_get_bcSuperSet_indexed(aggInfo.mathIntermediateData, ii, jj);
-                        aqi(ii,jj,1) = MAINcompute_aqi_(x, cycleNN, cycleD, 0,commonDataInfo.cell_threshold_set(jj),jj-1,1, cyclebc, aggInfo, commonDataInfo, ii, jj);
-                        aqi(ii,jj,2) = MAINcompute_aqi_(x, cycleNN, cycleD, 1,commonDataInfo.cell_threshold_set(jj),jj-1,1, cyclebc, aggInfo, commonDataInfo, ii, jj);
-                        aqi(ii,jj,3) = MAINcompute_aqi_(x, cycleNN, cycleD, 2,commonDataInfo.cell_threshold_set(jj),jj-1,1, cyclebc, aggInfo, commonDataInfo, ii, jj);
-                    end
-                    
+                    %% MM 20160826: this block...
+                    %                     if isequal(aggregationInfo.type, 'FIRSTGUESS')
+                    %                         % 20160420 MM temporary setting
+                    %                         aggInfo.mathIntermediateData=0;
+                    %                         fName=strtrim(commonDataInfo.pathANN(ii).ANNs(jj,:));
+                    %                         aggInfo.firstguess=0;
+                    %                         if (strcmp(fName,'-999') == 0)
+                    %                             [alpha, omega, radius, flatWeight, pollutantList]=firstguess_read(fName);
+                    %                             aggInfo.firstguess.alpha=alpha;
+                    %                             aggInfo.firstguess.omega=omega;
+                    %                             aggInfo.firstguess.radius=radius;
+                    %                             aggInfo.firstguess.flatWeight=flatWeight;
+                    %                             aggInfo.firstguess.pollutantList=pollutantList;
+                    %                         end
+                    %                         cycleNN=0;
+                    %                         cyclebc=0;
+                    %                         cycleD=quadrant_get_DSuperSet_indexed(aggInfo.geometryIntermediateData, ii, jj);
+                    %                         % FG version
+                    %                         aqi(ii,jj,1) = MAINcompute_aqi(x, cycleNN, cycleD, 0,commonDataInfo.cell_threshold_set(jj),jj-1,1, cyclebc, aggInfo, commonDataInfo, ii, jj);
+                    %                         % FG version only year period (third index=1)...
+                    %                         aqi(ii,jj,2) = MAINcompute_aqi(x, cycleNN, cycleD, 1,commonDataInfo.cell_threshold_set(jj),jj-1,1, cyclebc, aggInfo, commonDataInfo, ii, jj);
+                    %                         % FG version only year period (third index=1)...
+                    %                         aqi(ii,jj,3) = MAINcompute_aqi(x, cycleNN, cycleD, 2,commonDataInfo.cell_threshold_set(jj),jj-1,1, cyclebc, aggInfo, commonDataInfo, ii, jj);
+                    %                     else
+                    %                         %cycleD=interface_get_DSuperSetFunction_indexed(aggInfo.mathIntermediateData, ii, jj);
+                    %                         pathANN=commonDataInfo.pathANN;
+                    %                         fName=strtrim(pathANN(ii).ANNs(jj,:));
+                    %                         [net]=net_read(fName);
+                    %                         commonDataInfo.radius=net.icells;
+                    %                         cycleD=quadrant_get_DSuperSet_indexed(aggInfo.geometryIntermediateData, ii, jj);
+                    %                         cycleNN=neuralNet_get_nnSuperSet_indexed(aggInfo.mathIntermediateData, ii, jj);
+                    %                         cyclebc=quadrant_get_bcSuperSet_indexed(aggInfo.mathIntermediateData, ii, jj);
+                    %                         aqi(ii,jj,1) = MAINcompute_aqi(x, cycleNN, cycleD, 0,commonDataInfo.cell_threshold_set(jj),jj-1,1, cyclebc, aggInfo, commonDataInfo, ii, jj);
+                    %                         aqi(ii,jj,2) = MAINcompute_aqi(x, cycleNN, cycleD, 1,commonDataInfo.cell_threshold_set(jj),jj-1,1, cyclebc, aggInfo, commonDataInfo, ii, jj);
+                    %                         aqi(ii,jj,3) = MAINcompute_aqi(x, cycleNN, cycleD, 2,commonDataInfo.cell_threshold_set(jj),jj-1,1, cyclebc, aggInfo, commonDataInfo, ii, jj);
+                    %                     end
+                    %% MM 2016/08/26: ...is replaced by this call and next few lines
+                    [cycleNN, cycleD, cyclebc, extraInfo]=interfaceF_getcompute_aqi_Info(aggInfo.type, aggInfo, commonDataInfo.pathANN, ii, jj);
+                    aggInfo.extraInfo=extraInfo;
+                    aqi(ii,jj,1) = MAINcompute_aqi(x, cycleNN, cycleD, 0,commonDataInfo.cell_threshold_set(jj),jj-1,1, cyclebc, aggInfo, commonDataInfo, ii, jj);
+                    aqi(ii,jj,2) = MAINcompute_aqi(x, cycleNN, cycleD, 1,commonDataInfo.cell_threshold_set(jj),jj-1,1, cyclebc, aggInfo, commonDataInfo, ii, jj);
+                    aqi(ii,jj,3) = MAINcompute_aqi(x, cycleNN, cycleD, 2,commonDataInfo.cell_threshold_set(jj),jj-1,1, cyclebc, aggInfo, commonDataInfo, ii, jj);
                     %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint12_new', 'aqi');
                 end
                 
@@ -1802,10 +1763,10 @@ toc
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% MM Version (added parameters)
-%x,D,BCset, aggregationInfo, commonDataInfo, periodIndex, aqiIndex
-    %function aqi_per_cell=MAINcompute_aqi_per_cell_(x, DD, bcSet, aggregationInfo,commonDataInfo,periodIndex,aqiIndex)
-    function aqi_per_cell=MAINcompute_aqi_per_cell_(x, NN, DD, bcSet,  aggregationInfo,commonDataInfo,periodIndex,aqiIndex)
+% 20160228 MM Version (added parameters)
+% 20160228 MM x,D,BCset, aggregationInfo, commonDataInfo, periodIndex, aqiIndex
+%function aqi_per_cell=MAINcompute_aqi_per_cell(x, DD, bcSet, aggregationInfo,commonDataInfo,periodIndex,aqiIndex)
+    function aqi_per_cell=MAINcompute_aqi_per_cell(x, NN, DD, bcSet,  aggregationInfo,commonDataInfo,periodIndex,aqiIndex)
         
         % in case of areal+point summed, D and d contain infos both or areal
         % and point, together
@@ -1829,36 +1790,37 @@ toc
         %!!!!Load radius 4 or 16
         
         % 20160420 fg version
-        if isequal(aggregationInfo.type, 'FIRSTGUESS')
-             if size(x,1) == size(aggregationInfo.fullCLE,1)
-                 thisCLE=aggregationInfo.fullCLE;
-             else
-                 thisCLE=CLE;
-             end
-             
-            
-%             E = D * sparse(x);
-%             E = d - E;
-%             E_full = full(E);
-            Escenario = D * sparse(x);
-            Escenario = d - Escenario;
-            %sum(D)
-
-            Ecle = D * sparse(thisCLE);
-            Ecle = d - Ecle;
-            
-            E_full = full(Ecle) - full(Escenario);
-%             plot(E_full)
-            emis=firstguess_rebuildOrderedEmis(E_full, aggregationInfo.geometryIntermediateData, commonDataInfo);
-        else
-            % 20160420 nn/quadrant version
-            E = D * sparse(x);
-            E = d - E;
-            E_full = full(E);
-        %for quadrant case
-        %from global matrix, extract quadrant informations
-            emis=interface_rebuildOrderedEmis(E_full, aggregationInfo.geometryIntermediateData, commonDataInfo);
-        end
+        %% MM 2016/08/26: this block...
+        %         if isequal(aggregationInfo.type, 'FIRSTGUESS')
+        %              if size(x,1) == size(aggregationInfo.fullCLE,1)
+        %                  thisCLE=aggregationInfo.fullCLE;
+        %              else
+        %                  thisCLE=CLE;
+        %              end
+        % %             E = D * sparse(x);
+        % %             E = d - E;
+        % %             E_full = full(E);
+        %             Escenario = D * sparse(x);
+        %             Escenario = d - Escenario;
+        %             %sum(D)
+        %
+        %             Ecle = D * sparse(thisCLE);
+        %             Ecle = d - Ecle;
+        %             E_full = full(Ecle) - full(Escenario);
+        % %             plot(E_full)
+        %             emis=firstguess_rebuildOrderedEmis(E_full, aggregationInfo.geometryIntermediateData, commonDataInfo);
+        %         else
+        %             % 20160420 nn/quadrant version
+        %             E = D * sparse(x);
+        %             E = d - E;
+        %             E_full = full(E);
+        %         %for quadrant case
+        %         %from global matrix, extract quadrant informations
+        %             emis=interface_rebuildOrderedEmis(E_full, aggregationInfo.geometryIntermediateData, commonDataInfo);
+        %         end
+        %% MM 2016/08/26: ...is replaced by this call
+        [emis]=interfaceF_getEmisCLE(aggregationInfo.type, aggregationInfo.fullCLE, CLE, D, d, x, aggregationInfo.geometryIntermediateData, commonDataInfo);
+        
         %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint6_new','emis');
         
         %CASE OF AREAL+POINT, SUMMED
@@ -1868,15 +1830,19 @@ toc
             %model indepent NO
             
             % 20160420 nn/quadrant version
-            if isequal(aggregationInfo.type, 'FIRSTGUESS')
-                bcSet=0;
-                NN=0;
-                aggregationInfo.mathInfo=0;
-                % 20160420 fg version
-                emissioni=firstguess_buildEmission(emis, emisP, NN, bcSet, aggregationInfo.mathInfo, aggregationInfo,'A',periodIndex,aqiIndex);
-            else
-                emissioni=interface_buildEmission(emis, emisP, bcSet, NN, aggregationInfo.mathInfo,'A',periodIndex,aqiIndex);
-            end
+            %% MM 2016/08/26: this block...
+            %             if isequal(aggregationInfo.type, 'FIRSTGUESS')
+            %                 bcSet=0;
+            %                 NN=0;
+            %                 aggregationInfo.mathInfo=0;
+            %                 % 20160420 fg version
+            %                 emissioni=firstguess_buildEmission(emis, emisP, NN, bcSet, aggregationInfo.mathInfo, aggregationInfo,'A',periodIndex,aqiIndex);
+            %             else
+            %                 emissioni=interface_buildEmission(emis, emisP, bcSet, NN, aggregationInfo.mathInfo,'A',periodIndex,aqiIndex);
+            %             end
+            %% MM 2016/08/26: ...is replaced by this call
+            [emissioni]=interfaceF_getEmis(aggregationInfo.type, emis, emisP, NN, bcSet, aggregationInfo, 'A', periodIndex, aqiIndex);
+            
             %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPointEmissioni_a_new','emissioni');
             
             
@@ -1891,60 +1857,66 @@ toc
             Ep = dp - Ep;
             Ep_full = full(Ep);
             
-            % 20160420 fg version
-            if isequal(aggregationInfo.type, 'FIRSTGUESS')
-                emisP=FG_rebuildOrderedEmis(Ep_full, aggregationInfo.geometryIntermediateData, commonDataInfo);
-            else
-                % 20160420 nn/quadrant version
-                emisP=interface_rebuildOrderedEmis(Ep_full, aggregationInfo.geometryIntermediateData, commonDataInfo);
-            end
+            %% MM 2016/08/26: this block...
+            %             if isequal(aggregationInfo.type, 'FIRSTGUESS')
+            %                 emisP=FG_rebuildOrderedEmis(Ep_full, aggregationInfo.geometryIntermediateData, commonDataInfo);
+            %             else
+            %                 % 20160420 nn/quadrant version
+            %                 emisP=interface_rebuildOrderedEmis(Ep_full, aggregationInfo.geometryIntermediateData, commonDataInfo);
+            %             end
+            %% MM 2016/08/26: ...is replaced by this call
+            [emisP]=interfaceF_rebuildOrderedEmis(aggregationInfo.type, Ep_full, aggregationInfo.geometryIntermediateData, commonDataInfo);
             emissioni=interface_buildEmission(emis, emisP, NN, bcSet, aggregationInfo.mathDataInfo,aggregationInfo,aggregationInfo.mathIntermediateData,'P',periodIndex,aqiIndex);
             %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPointEmissioni_p_new','emissioni');
         end
         %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint7_new','emissioni');
-
-        if isequal(aggregationInfo.type, 'FIRSTGUESS')
-            aqi_per_cell=firstguess_do_aqi_per_cell(emissioni, NN, aggregationInfo, commonDataInfo, periodIndex, aqiIndex);
-        else
-            aqi_per_cell=do_interface_get_aqi_per_cell(emissioni, NN, aggregationInfo, commonDataInfo, periodIndex, aqiIndex);
-        end
-            % 20160420 fg version
-%             if isequal(aggregationInfo.type, 'FIRSTGUESS')
-% %                 sum(emissioni)
-%                 aqi_per_cell=firstguess_do_aqi_per_cell(emissioni, NN, aggregationInfo, commonDataInfo, periodIndex, aqiIndex);
-%                 fName=strtrim(commonDataInfo.pathBc(periodIndex).Bc(aqiIndex,:));
-%                 if (strcmp(fName,'-999') == 0)
-%                     % check compatibility of elements
-%                     concentration=firstguess_read_Bc(fName);
-%                     conc2=reshape(concentration',nx*ny,1);
-%                     conc2(flag_optim_dom==0)=[];
-%                     aqi_per_cell=conc2'-aqi_per_cell;
-%                 else
-%                     aqi_per_cell=aqi_per_cell;
-%                 end
-%                 
-%             else
-%                 %strtrim(pathANN(k).ANNs(indaqi,:))
-%                 % nn case
-%                 % 20160418: MM & EP net/quadrants input
-%                 aqi_per_cell=do_interface_get_aqi_per_cell(emissioni, NN, aggregationInfo, commonDataInfo, periodIndex, aqiIndex);
-%             end
-%          % 20160418: MM & EP regression input
-         
-            % 20160420 nn/quadrant version
+        
+        %% MM 2016/08/26: this block...
+        %         if isequal(aggregationInfo.type, 'FIRSTGUESS')
+        %             aqi_per_cell=firstguess_do_aqi_per_cell(emissioni, NN, aggregationInfo, commonDataInfo, periodIndex, aqiIndex);
+        %         else
+        %             aqi_per_cell=do_interface_get_aqi_per_cell(emissioni, NN, aggregationInfo, commonDataInfo, periodIndex, aqiIndex);
+        %         end
+        %% MM 2016/08/26: ...is replaced by this call
+        [aqi_per_cell]=interfaceF_getaqipercell(aggregationInfo.type, emissioni, NN, aggregationInfo, commonDataInfo, periodIndex, aqiIndex);
+        
+        % 20160420 fg version
+        %             if isequal(aggregationInfo.type, 'FIRSTGUESS')
+        % %                 sum(emissioni)
+        %                 aqi_per_cell=firstguess_do_aqi_per_cell(emissioni, NN, aggregationInfo, commonDataInfo, periodIndex, aqiIndex);
+        %                 fName=strtrim(commonDataInfo.pathBc(periodIndex).Bc(aqiIndex,:));
+        %                 if (strcmp(fName,'-999') == 0)
+        %                     % check compatibility of elements
+        %                     concentration=firstguess_read_Bc(fName);
+        %                     conc2=reshape(concentration',nx*ny,1);
+        %                     conc2(flag_optim_dom==0)=[];
+        %                     aqi_per_cell=conc2'-aqi_per_cell;
+        %                 else
+        %                     aqi_per_cell=aqi_per_cell;
+        %                 end
+        %
+        %             else
+        %                 %strtrim(pathANN(k).ANNs(indaqi,:))
+        %                 % nn case
+        %                 % 20160418: MM & EP net/quadrants input
+        %                 aqi_per_cell=do_interface_get_aqi_per_cell(emissioni, NN, aggregationInfo, commonDataInfo, periodIndex, aqiIndex);
+        %             end
+        %          % 20160418: MM & EP regression input
+        
+        % 20160420 nn/quadrant version
         
     end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %function aqi_val = ...
-%        MAINcompute_aqi_(x,nn,D,obj_function_type,cell_threshold,AQIId,REAL,prepareDataInfo,finalizeJobInfo,restoreDataInfo)
+%        MAINcompute_aqi(x,nn,D,obj_function_type,cell_threshold,AQIId,REAL,prepareDataInfo,finalizeJobInfo,restoreDataInfo)
 %function aqi_val = ...
-%        MAINcompute_aqi_(x,D,obj_function_type,cell_threshold,AQIId,REAL,prepareDataInfo,finalizeJobInfo,restoreDataInfo)
+%        MAINcompute_aqi(x,D,obj_function_type,cell_threshold,AQIId,REAL,prepareDataInfo,finalizeJobInfo,restoreDataInfo)
 %obj_function_type function applied
 %obj_function_type function applied
 %one single object split by section (inner structures, for example)
     function aqi_val = ...
-            MAINcompute_aqi_(x, NN, D, obj_function_type, cell_threshold, AQIId, REAL, BCset, aggregationInfo, commonDataInfo, periodIndex, aqiIndex)
+            MAINcompute_aqi(x, NN, D, obj_function_type, cell_threshold, AQIId, REAL, BCset, aggregationInfo, commonDataInfo, periodIndex, aqiIndex)
         
         % compute aqi per cell
         %30140403 ET - Added BCset input
@@ -1952,24 +1924,28 @@ toc
         %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint4_new',...
         %'x', 'D', 'obj_function_type', 'cell_threshold', 'AQIId', 'REAL','BCset');
         
-        aqi_per_cell = MAINcompute_aqi_per_cell_(x, NN,D,BCset, aggregationInfo, commonDataInfo, periodIndex, aqiIndex);
+        aqi_per_cell = MAINcompute_aqi_per_cell(x, NN,D,BCset, aggregationInfo, commonDataInfo, periodIndex, aqiIndex);
         %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint10_new', 'aqi_per_cell');
         
-        if isequal(aggregationInfo.type, 'FIRSTGUESS')
-            %                 sum(emissioni)
-%             aqi_per_cell=firstguess_do_aqi_per_cell(emissioni, NN, aggregationInfo, commonDataInfo, periodIndex, aqiIndex);
-            fName=strtrim(commonDataInfo.pathBc(periodIndex).Bc(aqiIndex,:));
-            if (strcmp(fName,'-999') == 0)
-                % check compatibility of elements
-                concentration=firstguess_read_Bc(fName);
-                conc2=reshape(concentration',nx*ny,1);
-                conc2(flag_optim_dom==0)=[];
-                aqi_per_cell=conc2'-aqi_per_cell;
-            else
-                aqi_per_cell=aqi_per_cell;
-            end
-        end
-           
+        %interface_recomputeaqipercell
+        %% MM 20160826: this block...
+        %         if isequal(aggregationInfo.type, 'FIRSTGUESS')
+        %             %                 sum(emissioni)
+        % %             aqi_per_cell=firstguess_do_aqi_per_cell(emissioni, NN, aggregationInfo, commonDataInfo, periodIndex, aqiIndex);
+        %             fName=strtrim(commonDataInfo.pathBc(periodIndex).Bc(aqiIndex,:));
+        %             if (strcmp(fName,'-999') == 0)
+        %                 % check compatibility of elements
+        %                 concentration=firstguess_read_Bc(fName);
+        %                 conc2=reshape(concentration',nx*ny,1);
+        %                 conc2(flag_optim_dom==0)=[];
+        %                 aqi_per_cell=conc2'-aqi_per_cell;
+        %             else
+        %                 aqi_per_cell=aqi_per_cell;
+        %             end
+        %         end
+        %% MM 2016/08/26: ...is replaced by this call
+        aqi_per_cell=interfaceF_recomputeaqipercell(aggregationInfo.type, aqi_per_cell, periodIndex, aqiIndex, commonDataInfo.pathBc, flag_optim_dom, nx, ny);
+        
         
         % managing the fact that PAD and ACD are different
         % define indexes for pad domain
@@ -1978,11 +1954,11 @@ toc
         indacd=flag_aqi_dom(indpad);
         % remove from aqi_per_cell what is not in the acd
         aqi_per_cell(indacd==0)=[];
-
-        %PATCH 20160601 EP        
+        
+        %PATCH 20160601 EP
         indisnan=find(isnan(aqi_per_cell));
         if isempty(indisnan)==0
-                aqi_per_cell(isnan(aqi_per_cell))=[];
+            aqi_per_cell(isnan(aqi_per_cell))=[];
         end
         
         if(AQIId == 6)
@@ -2098,15 +2074,18 @@ toc
         
         optAQIValues = zeros(commonDataInfo.optim_flags.optAQINum,1);
         
+        %interface_getfminconInput ??
         for ii = 1:commonDataInfo.optim_flags.optAQINum,
             % 20140403 ET - Added bcSuperSet(ii) input
-            D=interface_get_aqi_D(aggregationInfo.geometryIntermediateData, ii);
-            bc=interface_get_aqi_bc(aggregationInfo.mathIntermediateData, ii);
-            nn=interface_get_aqi_nnOptSet(aggregationInfo.mathIntermediateData, ii);
+            %% MM 20160826: ...is replaced by this call
+            [D, bc, nn]=interfaceF_getfminconInput(aggregationInfo.type, aggregationInfo, ii);
+            %D=interface_get_aqi_D(aggregationInfo.geometryIntermediateData, ii);
+            %bc=interface_get_aqi_bc(aggregationInfo.mathIntermediateData, ii);
+            %nn=interface_get_aqi_nnOptSet(aggregationInfo.mathIntermediateData, ii);
             
             %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint21_new', 'D','bc');
-
-            optAQIValues(ii,1) = MAINcompute_aqi_(x,...
+            
+            optAQIValues(ii,1) = MAINcompute_aqi(x,...
                 nn,...
                 D,...
                 commonDataInfo.aqi_obj_function_type(ii),...
@@ -2116,7 +2095,7 @@ toc
                 bc, ...
                 aggregationInfo, ...
                 commonDataInfo, ...
-                periodIndex,...
+                periodIndex(ii),...
                 ii);
             %%%%%%%%%%%%
             %optAQIValues(ii,1) = MAINcompute_aqi(x,nnOptSet(ii),DOptSet(ii),...
@@ -2144,7 +2123,7 @@ toc
                 end
             end
         end
- 
+        
         aqi_weights_init=commonDataInfo.aqi_weights_init;
         aqi_weights=commonDataInfo.aqi_weights;
         if aqi_weights_init <= 1
@@ -2178,13 +2157,13 @@ toc
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%function x_sol = MAINcompute_sol_(A,B,LB,UB,x0, aggregationInfo, periodIndex)
-    function x_sol = MAINcompute_sol_(A,B,LB,UB,x0, aggregationInfo, commonDataInfo, periodIndex)
+%function x_sol = MAINcompute_sol(A,B,LB,UB,x0, aggregationInfo, periodIndex)
+    function x_sol = MAINcompute_sol(A,B,LB,UB,x0, aggregationInfo, commonDataInfo, periodIndex)
         
         %nnOptSet=interface_get_nnOptSet(mathInfo);
         %DOptSet=interface_get_DOptSet(mathInfo);
         if(commonDataInfo.optim_flags.optAQINum == 1)
-            %             a=MAINcompute_aqi_(x,D,...
+            %             a=MAINcompute_aqi(x,D,...
             %                 aqi_obj_function_type(1),...
             %                 cell_threshold_set(aqi_obj(1)+1),...
             %                 aqi_obj(1),...
@@ -2192,31 +2171,34 @@ toc
             %                 aggregationInfo, ...
             %                 periodIndex,...
             %                 1);
-            % 20160421 First guess setting
-            if isequal(aggregationInfo.type, 'FIRSTGUESS')
-                D=firstguess_get_aqi_D(aggregationInfo.geometryIntermediateData, 1);
-%                 sum(sum(D.D))
-%                 sum(D.d)
-                bc=1;
-                % 20160421 First guess setting
-                nn=1;
-            else
-                % 20160421 quadrant/NN setting
-                D=interface_get_aqi_D(aggregationInfo.geometryIntermediateData, 1);
-                %cyclebc, aggInfo, commonDataInfo, ii, jj
-                %bc: delta or abs values
-                % 20160421 First guess setting
-                %bc: delta or abs values
-                % 20160421 quadrant/NN setting
-                bc=interface_get_aqi_bc(aggregationInfo.mathIntermediateData, 1);
-                % 20160421 quadrant/NN setting
-                nn=interface_get_aqi_nnOptSet(aggregationInfo.mathIntermediateData, 1);
-            end
-
+            % MM 20160421 First guess setting
+            %% MM 20160826: this block...
+            %             if isequal(aggregationInfo.type, 'FIRSTGUESS')
+            %                 D=firstguess_get_aqi_D(aggregationInfo.geometryIntermediateData, 1);
+            % %                 sum(sum(D.D))
+            % %                 sum(D.d)
+            %                 bc=1;
+            %                 % 20160421 First guess setting
+            %                 nn=1;
+            %             else
+            %                 % 20160421 quadrant/NN setting
+            %                 D=interface_get_aqi_D(aggregationInfo.geometryIntermediateData, 1);
+            %                 %cyclebc, aggInfo, commonDataInfo, ii, jj
+            %                 %bc: delta or abs values
+            %                 % 20160421 First guess setting
+            %                 %bc: delta or abs values
+            %                 % 20160421 quadrant/NN setting
+            %                 bc=interface_get_aqi_bc(aggregationInfo.mathIntermediateData, 1);
+            %                 % 20160421 quadrant/NN setting
+            %                 nn=interface_get_aqi_nnOptSet(aggregationInfo.mathIntermediateData, 1);
+            %             end
+            %% MM 20160826: ...is replaced by this call
+            [D, bc, nn]=interfaceF_getfminconInput(aggregationInfo.type, aggregationInfo, 1);
+            
             %save('C:\Users\enrico\Desktop\RIAT_FINAL\data\input\works', 'D','aggregationInfo', ...
             %    'x0', 'A', 'B', 'LB', 'UB');
             %load('C:\Users\enrico\Desktop\RIAT_FINAL\data\input\works');
-            x_sol=fmincon(@(x) MAINcompute_aqi_(x,nn,D,...
+            x_sol=fmincon(@(x) MAINcompute_aqi(x,nn,D,...
                 commonDataInfo.aqi_obj_function_type(1),...
                 commonDataInfo.cell_threshold_set(commonDataInfo.aqi_obj(1)+1),...
                 commonDataInfo.aqi_obj(1),...
@@ -2234,30 +2216,31 @@ toc
             
             for ii = 1:commonDataInfo.optim_flags.optAQINum,
                 
-                %D=aggregationInfo.mathIntermediateData.DOptSet(ii);
-                if isequal(aggregationInfo.type, 'FIRSTGUESS')
-                    % 20160421 First guess setting
-                    D=firstguess_get_aqi_D(aggregationInfo.geometryIntermediateData, ii);
-                    bc=1;
-                    % 20160421 First guess setting
-                    nn=1;
-                else
-                    % 20160421 quadrant/NN setting
-                    D=interface_get_aqi_D(aggregationInfo.geometryIntermediateData, ii);
-                    % 20160421 quadrant/NN setting
-                    bc=interface_get_aqi_bc(aggregationInfo.mathIntermediateData, ii);
-                    % 20160421 quadrant/NN setting
-                    nn=interface_get_aqi_nnOptSet(aggregationInfo.mathIntermediateData, ii);
-                    %nn=interface_get_aqi_nn(aggregationInfo.mathIntermediateData, ii);
-                    %[Da, Dpa]=interface_get_Dd_DOptSet(aggregationInfo.mathIntermediateData, ii)
-                    %disp(size(D));
-                    %disp(size(Da));
-                    %disp(size(Dpa));
-                end
-                
+                %% MM 20160826: this block...
+                %                 if isequal(aggregationInfo.type, 'FIRSTGUESS')
+                %                     % 20160421 First guess setting
+                %                     D=firstguess_get_aqi_D(aggregationInfo.geometryIntermediateData, ii);
+                %                     bc=1;
+                %                     % 20160421 First guess setting
+                %                     nn=1;
+                %                 else
+                %                     % 20160421 quadrant/NN setting
+                %                     D=interface_get_aqi_D(aggregationInfo.geometryIntermediateData, ii);
+                %                     % 20160421 quadrant/NN setting
+                %                     bc=interface_get_aqi_bc(aggregationInfo.mathIntermediateData, ii);
+                %                     % 20160421 quadrant/NN setting
+                %                     nn=interface_get_aqi_nnOptSet(aggregationInfo.mathIntermediateData, ii);
+                %                     %nn=interface_get_aqi_nn(aggregationInfo.mathIntermediateData, ii);
+                %                     %[Da, Dpa]=interface_get_Dd_DOptSet(aggregationInfo.mathIntermediateData, ii)
+                %                     %disp(size(D));
+                %                     %disp(size(Da));
+                %                     %disp(size(Dpa));
+                %                 end
+                %% MM 20160826: ...is replaced by this call
+                [D, bc, nn]=interfaceF_getfminconInput(aggregationInfo.type, aggregationInfo, ii);
                 %x, D, obj_function_type, cell_threshold, AQIId, REAL, BCset, aggregationInfo, commonDataInfo, periodIndex, aqiIndex
                 %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint18b_new', 'D','bc');
-                x_aqi=fmincon(@(x) MAINcompute_aqi_(x,...
+                x_aqi=fmincon(@(x) MAINcompute_aqi(x,...
                     nn,...
                     D,...
                     commonDataInfo.aqi_obj_function_type(ii),...
@@ -2267,7 +2250,7 @@ toc
                     bc, ...
                     aggregationInfo, ...
                     commonDataInfo, ...
-                    periodIndex,...
+                    periodIndex(ii),...
                     ii),...
                     x0, A, B, [], [], LB, UB, [], opt);
                 %
@@ -2275,13 +2258,13 @@ toc
                 %    0,bcOptSet(ii)
                 %
                 %MM check missing parameters here!
-                %                 optAQIBestValues(ii,1) = MAINcompute_aqi_(x_aqi,nnOptSet(ii),DOptSet(ii),...
+                %                 optAQIBestValues(ii,1) = MAINcompute_aqi(x_aqi,nnOptSet(ii),DOptSet(ii),...
                 %                     aqi_obj_function_type(ii),...
                 %                     cell_threshold_set(aqi_obj(ii)+1),...
                 %                     aqi_obj(ii),....
                 %                     0);
                 %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\var_x_aqi_new', 'x_aqi');
-                optAQIBestValues(ii,1) = MAINcompute_aqi_(x_aqi,...
+                optAQIBestValues(ii,1) = MAINcompute_aqi(x_aqi,...
                     nn,...
                     D,...
                     commonDataInfo.aqi_obj_function_type(ii),...
@@ -2291,7 +2274,7 @@ toc
                     bc, ...
                     aggregationInfo, ...
                     commonDataInfo, ...
-                    periodIndex,...
+                    periodIndex(ii),...
                     ii);
             end
             
@@ -2300,7 +2283,7 @@ toc
             %x_sol=fmincon(@(x) MAINcompute_aqi_mp(x,optAQIBestValues),...
             %    x0, A, B, [], [], LB, UB, [], opt);
             %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\var_optAQIBestValues_new','optAQIBestValues');
-            %MM: multi pollutant opt section
+            % MM 20160926: multi pollutant opt section (to be fixed!!!)
             x_sol=fmincon(@(x) MAINcompute_aqi_mp_(x,optAQIBestValues, aggregationInfo, commonDataInfo,...
                 periodIndex),...
                 x0, A, B, [], [], LB, UB, [], opt);
@@ -2586,7 +2569,7 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %COMPUTING AGGREGATED SCENARIO MODE SOLUTIONS
-function [aqi_per_cell]=MAINaggregated_scenario_mode_(emiTMP,NN,periodIndex,aqiIndex, aggregationInfo, commonDataInfo)
+function [aqi_per_cell]=MAINaggregated_scenario_mode(emiTMP,NN,periodIndex,aqiIndex, aggregationInfo, commonDataInfo)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %ANNS CONSIDERED

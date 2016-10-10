@@ -21,8 +21,8 @@ function [aqi_per_cell]= firstguess_do_aqi_per_cell( emissioni, NN, aggregationI
 
         %commonDataInfo.domainInfo.flag_aqi_dom;
         %commonDataInfo.domainInfo.flag_optim_dom;
-        alpha=aggregationInfo.firstguess.alpha;
-        omega=aggregationInfo.firstguess.omega;
+        alpha=aggregationInfo.extraInfo.alpha;
+        omega=aggregationInfo.extraInfo.omega;
         %change dimensions of alpha and omega to be coherent with emissions
         alpha=permute(alpha,[2 1 3]);
         omega=permute(omega,[2 1 3]);

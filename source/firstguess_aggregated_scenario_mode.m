@@ -4,7 +4,7 @@ function [aqi_per_cell]=firstguess_aggregated_scenario_mode(emiTMP, aggregationI
 %ANNS CONSIDERED
 %NN=nnSuperSet(ii).nnSet(jj);
 %save('C:\data\work\projects\riat\RiatPlus-v6.1b\datasave\sa_start_fix', 'emiTMP','NN');
-precNames=aggregationInfo.firstguess.pollutantList;%{'NOx';'NMVOC';'NH3';'PM10';'PM25';'SOx'};
+precNames=aggregationInfo.extraInfo.pollutantList;%{'NOx';'NMVOC';'NH3';'PM10';'PM25';'SOx'};
 [ncel, nx, ny]=calcCellNo('latlon', commonDataInfo);
 icells=ncel;
 %coordinate=commonDataInfo.domainData.data(:,1:2);
@@ -21,7 +21,7 @@ x=0;
 y=0;
 indiciMAT=0;
 splitResult=0;
-commonDataInfo.firstguess=aggregationInfo.firstguess;
+commonDataInfo.extraInfo=aggregationInfo.extraInfo;
 [s1_NOX]=firstguess_Finalize(aggregationInfo, intermediateResult, commonDataInfo, emiTMP(:,1), 1, ...
     x, y, nx, ny, precNames(1), indiciMAT, splitResult);
 [s1_VOC]=firstguess_Finalize(aggregationInfo, intermediateResult, commonDataInfo, emiTMP(:,2), 2, ...
@@ -141,8 +141,8 @@ emissioni(find(flag_optim_dom==0),:)=[];
 %20130820 - consider only if cell completerly in PAD
 %         emissioni(find(flag_optim_dom==0 | flag_optim_dom==2),:)=[];
 
-alpha=aggregationInfo.firstguess.alpha;
-omega=aggregationInfo.firstguess.omega;
+alpha=aggregationInfo.extraInfo.alpha;
+omega=aggregationInfo.extraInfo.omega;
 %change dimensions of alpha and omega to be coherent with emissions
 alpha=permute(alpha,[2 1 3]);
 omega=permute(omega,[2 1 3]);
