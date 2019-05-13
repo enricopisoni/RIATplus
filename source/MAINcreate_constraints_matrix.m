@@ -192,13 +192,13 @@ if flag_constraints==1
 %                if((sec_act(sa,1) == global_data(tt,2)) && ...
 %                        (sec_act(sa,2) == global_data(tt,3)) && ...
 %                        (sec_act(sa,3) == global_data(tt,5)) && ...
-%                       ((eff(tt,p) > 0) || (eff(tt,p) < 0)) && ...
-%                       (flag_tech_nontech(tt) == 1) )
+%                        ((eff(tt,p) > 0) || (eff(tt,p) < 0)) && ...
+%                        (flag_tech_nontech(tt) == 1) )
                     
                     
 %                    constraintLHS = [constraintLHS, -eff(tt,p)/100];
                     
-%                   constraintRHS = constraintRHS - ...
+%                    constraintRHS = constraintRHS - ...
 %                        CLE(tt) * eff(tt,p)/100;
                     
 %                    insert = 1;
@@ -212,7 +212,7 @@ if flag_constraints==1
 %                A_EMISSIONS_REDUCTION = [A_EMISSIONS_REDUCTION ; constraintLHS];
 %                B_EMISSIONS_REDUCTION = [B_EMISSIONS_REDUCTION ; constraintRHS];
 %            end
-%       end
+%        end
 %    end
     
     

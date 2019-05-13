@@ -1,4 +1,4 @@
-function [quadrantStruct]=quadrant_Prepare_init(refInfo, common, refData)
+function [quadrantStruct]=quadrant_Prepare_init(refInfo, common)
 
 %compute quadrant emissions
 

@@ -536,8 +536,15 @@ fclose(fidStatus)
         
         %add noc sec-act-tec data
         tmp=out_clemfr(find(out_clemfr(:,4)==nocID),:);
-        global_data=[global_data out_clemfr(find(out_clemfr(:,4)~=nocID),24) ...
-            out_clemfr(find(out_clemfr(:,4)~=nocID),25); tmp];
+				
+		% FF 20190404 Terraria Mod
+        %aggiunte questa riga per evitare blocco nel codice:
+        global_data=out_clemfr(:,:);
+        % eliminando la riga sotto:        
+        % FF 20190404 Terraria Mod
+				
+        %global_data=[global_data out_clemfr(find(out_clemfr(:,4)~=nocID),24) ...
+        %    out_clemfr(find(out_clemfr(:,4)~=nocID),25); tmp];
         
         xtmp=zeros(size(tmp,1),4);
         x_alpha=[x_alpha; xtmp];
@@ -657,9 +664,16 @@ fclose(fidStatus)
         x(x<1e-6)=0;
         
         %add noc sec-act-tec data
-        tmp=out_clemfr(out_clemfr(:,4)==nocID,:);
-        global_data=[global_data out_clemfr(find(out_clemfr(:,4)~=nocID),24) ...
-            out_clemfr(find(out_clemfr(:,4)~=nocID),25); tmp];
+        tmp=out_clemfr(find(out_clemfr(:,4)==nocID),:);
+				
+		% FF 20190404 Terraria Mod
+        %aggiunte questa riga per evitare blocco nel codice:
+        global_data=out_clemfr(:,:);
+        % eliminando la riga sotto:        
+        % FF 20190404 Terraria Mod
+				
+        %global_data=[global_data out_clemfr(find(out_clemfr(:,4)~=nocID),24) ...
+        %    out_clemfr(find(out_clemfr(:,4)~=nocID),25); tmp];
         
         xtmp=zeros(size(tmp,1),6);
         x_alpha=[x_alpha; xtmp];

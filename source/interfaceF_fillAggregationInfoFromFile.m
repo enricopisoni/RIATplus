@@ -1,6 +1,6 @@
 function [extraInfo]=interfaceF_fillAggregationInfoFromFile(type, pathAnn, index1, index2)
 
-extraInfo=0;
+extraInfo=[];
 if isequal(type, 'FIRSTGUESS')
     %if (isequal(strtrim(aggregationInfo.type),'FIRSTGUESS')==1)
     %fName=strtrim(commonDataInfo.pathANN(1).ANNs(commonDataInfo.aqi_obj+1,:));

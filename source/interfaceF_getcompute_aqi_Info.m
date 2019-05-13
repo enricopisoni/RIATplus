@@ -1,6 +1,6 @@
 function [cycleNN, cycleD, cyclebc, extraInfo]=interfaceF_getcompute_aqi_Info(type, aggInfo, pathANN, ii, jj)
 
-extraInfo=0;
+extraInfo=[];
 if isequal(type, 'FIRSTGUESS')
     aggInfo.mathIntermediateData=0;
     fName=strtrim(pathANN(ii).ANNs(jj,:));

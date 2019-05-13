@@ -202,12 +202,25 @@ for indexPareto=1:npoints
                 
                 %MOD20160531ET Compute AQI at cle Level
                 % function [emi_low,emi_high,aqi_val2]=POST_FG_compute_aqi(x,SR,DD,indexSea, aqiIndex)
-                [~,~,aqi_val_CLE]=POST_FG_compute_aqi(sSet(indexPareto).X,SRInfo,...
-                    DSuperSet, indexSea, j, emi, commonDataInfo,sSet(1).X,aggregationInfo);
+                %[~,~,aqi_val_CLE]=POST_FG_compute_aqi(sSet(indexPareto).X,SRInfo,...
+                %    DSuperSet, indexSea, j, emi, commonDataInfo,sSet(1).X,aggregationInfo);
                 % function [emi_low,emi_high,aqi_val2]=POST_FG_compute_aqi(x,SR,DD,indexSea, aqiIndex)
-                [emi_low,emi_high,aqi_val]=POST_FG_compute_aqi(sSet(indexPareto).X,SRInfo,...
-                    DSuperSet, indexSea, j, emi, commonDataInfo,sSet(1).X, aggregationInfo);
+                %[emi_low,emi_high,aqi_val]=POST_FG_compute_aqi(sSet(indexPareto).X,SRInfo,...
+                %    DSuperSet, indexSea, j, emi, commonDataInfo,sSet(1).X, aggregationInfo);
                 %DSuperSet(indexSea).DSet(j), indexSea, j);
+                
+                % FF 20190327 Terraria Mod - Compute AQI at cle REF
+                % function [emi_low,emi_high,aqi_val2]=POST_FG_compute_aqi(x,SR,DD,indexSea, aqiIndex)
+                [~,~,aqi_val_CLE]=POST_FG_compute_aqiRef(sSet(indexPareto).X,SRInfo,...
+                    DSuperSet, indexSea, j, emi, commonDataInfo,sSet(1).X,aggregationInfo,...
+                    aggregationInfo.fullCLEref);
+                % function [emi_low,emi_high,aqi_val2]=POST_FG_compute_aqi(x,SR,DD,indexSea, aqiIndex)
+                [emi_low,emi_high,aqi_val]=POST_FG_compute_aqiRef(sSet(indexPareto).X,SRInfo,...
+                    DSuperSet, indexSea, j, emi, commonDataInfo,sSet(1).X, aggregationInfo,...
+                    aggregationInfo.fullCLEref);
+                %DSuperSet(indexSea).DSet(j), indexSea, j);
+                
+                
                 
                 %ENR20130417 - adding the model bias
                 flag_opt_filt=logical(flag_optim_dom(flag_region_dom==1 | flag_region_dom==2,1));
@@ -583,8 +596,15 @@ fclose(fidStatus);
         
         %add noc sec-act-tec data
         tmp=out_clemfr(find(out_clemfr(:,4)==nocID),:);
-        global_data=[global_data out_clemfr(find(out_clemfr(:,4)~=nocID),24) ...
-            out_clemfr(find(out_clemfr(:,4)~=nocID),25); tmp];
+				
+		% FF 20190404 Terraria Mod
+        %aggiunte questa riga per evitare blocco nel codice:
+        global_data=out_clemfr(:,:);
+        % eliminando la riga sotto:        
+        % FF 20190404 Terraria Mod
+				
+        %global_data=[global_data out_clemfr(find(out_clemfr(:,4)~=nocID),24) ...
+        %    out_clemfr(find(out_clemfr(:,4)~=nocID),25); tmp];
         
         xtmp=zeros(size(tmp,1),4);
         x_alpha=[x_alpha; xtmp];
@@ -705,8 +725,15 @@ fclose(fidStatus);
         
         %add noc sec-act-tec data
         tmp=out_clemfr(out_clemfr(:,4)==nocID,:);
-        global_data=[global_data out_clemfr(find(out_clemfr(:,4)~=nocID),24) ...
-            out_clemfr(find(out_clemfr(:,4)~=nocID),25); tmp];
+        
+        % FF 20190404 Terraria Mod
+        %aggiunte questa riga per evitare blocco nel codice:
+        global_data=out_clemfr(:,:);
+        % eliminando la riga sotto:        
+        % FF 20190404 Terraria Mod
+        
+        %global_data=[global_data out_clemfr(find(out_clemfr(:,4)~=nocID),24) ...
+        %   out_clemfr(find(out_clemfr(:,4)~=nocID),25); tmp];
         
         xtmp=zeros(size(tmp,1),6);
         x_alpha=[x_alpha; xtmp];
@@ -951,6 +978,8 @@ fclose(fidStatus);
         %UNIBS(ET)20131001 - from here to line the end of the first for
         %flag_optim_dom has been changed with flag_region_dom
         
+        x_CLE=x_CLE(global_data(:,5)==1);
+        
         %preallocate variables
         emi_low(length(flag_region_dom),6)=0;
         emi_high(length(flag_region_dom),6)=0;
@@ -1173,6 +1202,268 @@ fclose(fidStatus);
     end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%FUNCTION TO COMPUTE EMISSIONS AND AQIS VALUES PER CELL
+        %MOD20160531ET
+    function [emi_low,emi_high,aqi_val2]=POST_FG_compute_aqiRef(x,SR,DD,indexSea, aqiIndex, emi, commonDataInfo,x_CLE,aggregationInfo,x_CLEref)
+        
+        %compute aqi related to an optimal solution
+        %define low emissions matrix (to be used for emission computation)
+        [ncel, nx, ny]=interfaceF_getCellInfo(aggregationInfo.type, commonDataInfo);
+        %[ncel, nx, ny]=calcCellNo('latlon', commonDataInfo);
+        
+        global_data=commonDataInfo.special.global_data;
+        flag_region_dom=commonDataInfo.domainInfo.flag_region_dom;
+        
+        xtmplow=x(global_data(:,5)==1);
+        xtmplow2=[xtmplow xtmplow xtmplow xtmplow xtmplow xtmplow];
+        
+        %MOD20160531ET
+        xtmplow_CLE=x_CLE(global_data(:,5)==1);
+        xtmplow2_CLE=[xtmplow_CLE xtmplow_CLE xtmplow_CLE xtmplow_CLE xtmplow_CLE xtmplow_CLE];
+        %MOD20160531ET
+        
+        %define high emissions matrix (to be used for emission computation)
+        xtmphigh=x(global_data(:,5)==2);
+        xtmphigh2=[xtmphigh xtmphigh xtmphigh xtmphigh xtmphigh xtmphigh];
+        
+        %define high emissions matrix (to be used for emission computation)
+        %MOD20160531ET
+        xtmphigh_CLE=x_CLE(global_data(:,5)==2);
+        xtmphigh2_CLE=[xtmphigh_CLE xtmphigh_CLE xtmphigh_CLE xtmphigh_CLE xtmphigh_CLE xtmphigh_CLE];
+        %MOD20160531ET
+        
+        %UNIBS(ET)20131001 - from here to line the end of the first for
+        %flag_optim_dom has been changed with flag_region_dom
+        
+        % FF 20190329 Terraria Mod
+        x_CLEref=x_CLEref(global_data(:,5)>1);
+        
+        %preallocate variables
+        emi_low(length(flag_region_dom),6)=0;
+        emi_high(length(flag_region_dom),6)=0;
+        
+        %loop over cells to create emissions file
+        for i=1:length(flag_region_dom)
+            
+            if flag_region_dom(i)==0
+                %case of cells without optimization domain
+                %emission order: NOX, COV, NH3, PM10, PM25, SO2.
+                emi_low(i,:)=flag_region_dom(i,:);
+                emi_high(i,:)=flag_region_dom(i,:);
+                             %MOD20160531ET
+            elseif (flag_region_dom(i)==1 | flag_region_dom(i)==2)& (flag_optim_dom(i)==1 | flag_optim_dom(i)==2)
+                             %MOD20160531ET
+                %for cells inside optimization domain
+                %separate low and high emissions
+                tmp_emi_low=emi{i,2}(global_data(:,5)==1,:);
+                tmp_emi_high=emi{i,2}(global_data(:,5)==2,:);
+                
+                gdl=global_data(global_data(:,5)==1,:);
+                gdl_sa=gdl(:,[2 3]);
+                [a , ~, c]=unique(gdl_sa,'rows');
+                for sa=1:size(a,1)
+                    ind_sa_gdl=find(gdl(:,2)==a(sa,1) & gdl(:,3)==a(sa,2));
+                    gdl_emibase=tmp_emi_low(ind_sa_gdl,:); %emissions for this cell, for all techs in sa
+                    gdl_re=gdl(ind_sa_gdl,6:11)/100; %re for this cell, for all techs in sa
+                    gdl_ar=xtmplow2(ind_sa_gdl,:); %ar for this cell, for all techs in sa
+                    emiRed(sa,1:6)=sum(gdl_emibase(:,1:6).*gdl_re(:,:).*gdl_ar(:,:),1); %reduced emissions
+                end
+                emi_low(i,:)=base_emi_low(i,:)+base_emi_low_noc(i,:)-sum(emiRed);
+                
+                gdh=global_data(global_data(:,5)==2,:);
+                gdh_sa=gdh(:,[2 3]);
+                [a2 , ~, c]=unique(gdh_sa,'rows');
+                emiRedHigh=[]; %20150304 ET - deal with DBs without punctual sources
+                for sa=1:size(a2,1)
+                    ind_sa_gdh=find(gdh(:,2)==a2(sa,1) & gdh(:,3)==a2(sa,2));
+                    gdh_emibase=tmp_emi_high(ind_sa_gdh,:); %emissions for this cell, for all techs in sa
+                    gdh_re=gdh(ind_sa_gdh,6:11)/100; %re for this cell, for all techs in sa
+                    gdh_ar=xtmphigh2(ind_sa_gdh,:); %ar for this cell, for all techs in sa
+                    emiRedHigh(sa,1:6)=sum(gdh_emibase(:,1:6).*gdh_re(:,:).*gdh_ar(:,:),1); %remaining emissions
+                end
+                emi_high(i,:)=base_emi_high(i,:)+base_emi_high_noc(i,:)-sum(emiRedHigh);
+                  
+           %MOD20160531ET
+            elseif (flag_region_dom(i)==1 | flag_region_dom(i)==2) & (flag_optim_dom(i)==0)
+                %for cells inside optimization domain
+                %separate low and high emissions
+                tmp_emi_low=emi{i,2}(global_data(:,5)==1,:);
+                tmp_emi_high=emi{i,2}(global_data(:,5)==2,:);
+                
+                gdl=global_data(global_data(:,5)==1,:);
+                gdl_sa=gdl(:,[2 3]);
+                [a , ~, c]=unique(gdl_sa,'rows');
+                for sa=1:size(a,1)
+                    ind_sa_gdl=find(gdl(:,2)==a(sa,1) & gdl(:,3)==a(sa,2));
+                    gdl_emibase=tmp_emi_low(ind_sa_gdl,:); %emissions for this cell, for all techs in sa
+                    gdl_re=gdl(ind_sa_gdl,6:11)/100; %re for this cell, for all techs in sa
+                    gdl_ar=xtmplow2_CLE(ind_sa_gdl,:); %ar for this cell, for all techs in sa
+                    emiRed(sa,1:6)=sum(gdl_emibase(:,1:6).*gdl_re(:,:).*gdl_ar(:,:),1); %reduced emissions
+                end
+                emi_low(i,:)=base_emi_low(i,:)+base_emi_low_noc(i,:)-sum(emiRed);
+                sum(emiRed)
+                
+                gdh=global_data(global_data(:,5)==2,:);
+                gdh_sa=gdh(:,[2 3]);
+                [a2 , ~, c]=unique(gdh_sa,'rows');
+                emiRedHigh=[]; %20150304 ET - deal with DBs without punctual sources
+                for sa=1:size(a2,1)
+                    ind_sa_gdh=find(gdh(:,2)==a2(sa,1) & gdh(:,3)==a2(sa,2));
+                    gdh_emibase=tmp_emi_high(ind_sa_gdh,:); %emissions for this cell, for all techs in sa
+                    gdh_re=gdh(ind_sa_gdh,6:11)/100; %re for this cell, for all techs in sa
+                    gdh_ar=xtmphigh2_CLE(ind_sa_gdh,:); %ar for this cell, for all techs in sa
+                    emiRedHigh(sa,1:6)=sum(gdh_emibase(:,1:6).*gdh_re(:,:).*gdh_ar(:,:),1); %remaining emissions
+                end
+                emi_high(i,:)=base_emi_high(i,:)+base_emi_high_noc(i,:)-sum(emiRedHigh);
+                %MOD20160531ET      
+                
+            end
+        end
+        
+        %UNIBS(ET)20131001 - keep only cells in regional domain
+        emi_low=emi_low(find(flag_region_dom==1 | flag_region_dom==2),:);
+        emi_high=emi_high((flag_region_dom==1 | flag_region_dom==2),:);
+        %emi_low=emi_low+emi_high;
+        
+        %in case of areal+point summed, D and d contain infos both or areal
+        %and point, together
+        %in case of areal and point separated, D and d are only related to
+        %areal emissions (the point infos Dp and dp will be used later on)
+        D=DD(aqiIndex).D;
+        d=DD(aqiIndex).d;
+        
+        % 20160622 version with absolute values kton/year
+        %E = D * sparse(x);
+        %E = d - E;
+        %E_full = full(E);
+        %emis=E_full;
+        % 20160622 version with delta values emissions density
+        Escenario = D * sparse(x);
+        Escenario = d - Escenario;
+
+        if size(x,1) == size(aggregationInfo.fullCLEref,1)
+            thisCLE=aggregationInfo.fullCLEref;
+        else
+            thisCLE=x_CLEref;
+        end
+        
+        Ecle = D * sparse(thisCLE);
+        Ecle = d - Ecle;
+            
+        E_full = full(Ecle) - full(Escenario);
+        emis=E_full;
+
+        %%
+        %optimizerCondition=commonDataInfo.optimizerCondition;
+        %optimizerValues=commonDataInfo.optimizerValues;
+
+        precNames={'NOx';'NMVOC';'NH3';'PM10';'PM25';'SOx'};
+        %execString=strcat('length(find(', optimizerCondition);
+        %execString=strcat(execString, '))');
+        %ncelopt=eval(execString);
+
+        %restore first guess emissions
+        s1_NOX = emis((ncelopt*0)+1:ncelopt*1);
+
+        s1_VOC = emis((ncelopt*1)+1:ncelopt*2);
+
+        s1_NH3 = emis((ncelopt*2)+1:ncelopt*3);
+
+        s1_PM10 = emis((ncelopt*3)+1:ncelopt*4);
+
+        s1_PM25 = emis((ncelopt*4)+1:ncelopt*5);
+
+        s1_SO2 = emis((ncelopt*5)+1:ncelopt*6);
+        
+        %CASE OF AREAL+POINT, SUMMED
+        %if areal_point==0
+            
+            %ET20140313
+            %input selection based on ANNs features
+            
+            %read net and select precursors
+            emissioni=[];
+            for i_prec=1:size(precNames,1) %areal do always
+                if strcmp(precNames(i_prec),'NH3')==1
+                    emissioni=[emissioni, s1_NH3];
+                elseif strcmp(precNames(i_prec),'NOx')==1
+                    emissioni=[emissioni, s1_NOX];
+                elseif strcmp(precNames(i_prec),'PM10')==1
+                    emissioni=[emissioni, s1_PM10];
+                elseif strcmp(precNames(i_prec),'PM25')==1
+                    emissioni=[emissioni, s1_PM25];
+                elseif strcmp(precNames(i_prec),'SOx')==1
+                    emissioni=[emissioni, s1_SO2];
+                elseif strcmp(precNames(i_prec),'NMVOC')==1
+                    emissioni=[emissioni, s1_VOC];
+                end
+            end
+        
+        %input_rete2=emissioni';
+%         alpha=aggregationInfo.firstguess.alpha;
+%         omega=aggregationInfo.firstguess.omega;
+        %READ CORRECT SR
+        alpha=SR.alpha;
+        omega=SR.omega;
+        %READ CORRECT SR
+        
+        %change dimensions of alpha and omega to be coherent with emissions
+        alpha=permute(alpha,[2 1 3]);
+        omega=permute(omega,[2 1 3]);
+        
+        dimX=size(alpha,1);
+        dimY=size(alpha,2);
+        for i=1:size(alpha,3)
+            tmp=alpha(:,:,i);
+            thisAlpha(:,i)=reshape(tmp,dimX*dimY,1);
+        end
+            
+        %remove not used data
+        thisAlpha(commonDataInfo.flag_region_dom==0,:)=[];
+%         new_alpha=reshape(alpha,dimy,dimx);
+        %emissioni*.aggregationInfo.firstguess.alpha
+        %in case it is necessary to process quadrant emissions (if too close
+        %to domain boundary, it is necessary to increment emissions with
+        %the assumptions that part of the quadrant in which emissions are
+        %not available, still contain same emission average)
+        dirs=commonDataInfo.dirs;
+        domainInfo=commonDataInfo.domainInfo;
+        
+        %from the SR netcdf, use only NOx(1), NH3(3), PM25(5), SO2(6)
+        %if jj eq 0 or 1
+%         if ((aqiIndex == 1) || (aqiIndex == 2)) aqi_per_cell=sum(emissioni(:,[1 3 5 6]).*thisAlpha(:,[1 3 5 6]),2); end
+%         if (aqiIndex == 6) aqi_per_cell=sum(emissioni(:,[1]).*thisAlpha(:,[1]),2); end
+        % FF 20190402 Terraria Mod: aggiunto VOC(2) nel calcolo delle
+        % concentrazioni
+%         if (aqiIndex == 1) aqi_per_cell=sum(emissioni(:,[1 3 4 6]).*thisAlpha(:,[1 3 4 6]),2); end %nox,nh3,pm10,so2
+%         if (aqiIndex == 2) aqi_per_cell=sum(emissioni(:,[1 3 5 6]).*thisAlpha(:,[1 3 5 6]),2); end %nox,nh3,pm25,so2
+%         if (aqiIndex == 6) aqi_per_cell=sum(emissioni(:,[1]).*thisAlpha(:,[1]),2); end             %nox
+        if (aqiIndex == 1) aqi_per_cell=sum(emissioni(:,[1 2 3 4 6]).*thisAlpha(:,[1 2 3 4 6]),2); end %nox,nh3,pm10,so2
+        if (aqiIndex == 2) aqi_per_cell=sum(emissioni(:,[1 2 3 5 6]).*thisAlpha(:,[1 2 3 5 6]),2); end %nox,nh3,pm25,so2
+        if (aqiIndex == 6) aqi_per_cell=sum(emissioni(:,[1]).*thisAlpha(:,[1]),2); end             %nox
+        
+        
+        %% 20160622 MM+EP
+        fName=strtrim(commonDataInfo.pathBc(indexSea).Bc(aqiIndex,:));
+        if (strcmp(fName,'-999') == 0)
+            % check compatibility of elements
+            concentration=firstguess_read_Bc(fName);
+            conc2=reshape(concentration',nx*ny,1);
+            conc2(flag_optim_dom==0)=[];
+            aqi_per_cell=conc2-aqi_per_cell;
+        else
+            aqi_per_cell=aqi_per_cell;
+        end
+        %%
+        %change name to a better one!!! (too similar to caller...)
+        %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint8_new','input_rete2');
+        % 20160421 MM / EP SR / First guess Version
+        %aqi_per_cell=interface_get_aqipercell(input_rete2, NN, aggregationInfo.mathIntermediateData, commonDataInfo, periodIndex, aqiIndex );
+        periodIndex=1;
+        aqi_val2=firstguess_get_aqipercell(aqi_per_cell, aggregationInfo, commonDataInfo, periodIndex, aqiIndex );
+        aqi_val2=aqi_val2';
+    end
 
 %FUNCTION TO COMPUTE EMISSIONS AND AQIS MAPS
     function []=POSTcomputeMaps(livelli,map,nomefile,aqilab,indexPareto,outdir,...

@@ -276,8 +276,8 @@ if (commonDataInfo.optim_flags.mode_ce_mo==0 | commonDataInfo.optim_flags.mode_c
     % has to contain AR values between 0 and 1
     arADSdet=global_data(:,24);
     arREF=global_data(:,25);
-    global_data(:,25)=[];
-    global_data(:,24)=[];
+    %global_data(:,25)=[];
+    %global_data(:,24)=[];
     commonDataInfo.special.global_data=global_data;
 end
 
@@ -485,6 +485,10 @@ if (commonDataInfo.optim_flags.mode_ce_mo==0 | commonDataInfo.optim_flags.mode_c
     
     %starting point for optimization
     CLE = global_data(:,19)/100;
+    %FF 20190329 Terraria Mod
+    CLEref = global_data(:,25)/100;
+    %global_data(:,25)=[];
+    %global_data(:,24)=[];
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1210,6 +1214,12 @@ end;
 
 if (commonDataInfo.optim_flags.mode_ce_mo==0 | commonDataInfo.optim_flags.mode_ce_mo==1 | commonDataInfo.optim_flags.mode_ce_mo==2)
     CLE = global_data(:,19)/100;
+    
+    %FF 20190329 Terraria Mod
+    CLEref = global_data(:,25)/100;
+    global_data(:,25)=[];
+    global_data(:,24)=[];
+    
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1642,6 +1652,10 @@ toc
         aggregationInfo.fullCLE=CLE;
         CLE = CLE(final_active_technologies==1);
         
+        % FF 20190329 Terraria Mod
+        aggregationInfo.fullCLEref=CLEref;
+        CLEref = CLEref(final_active_technologies==1);
+        
         % update of Dx - keep only technologies to be optimized
         for ii = 1:commonDataInfo.optim_flags.optAQINum,
             DOptSet(ii).D = DOptSet(ii).D(:,(final_active_technologies==1));
@@ -1819,7 +1833,10 @@ toc
         %             emis=interface_rebuildOrderedEmis(E_full, aggregationInfo.geometryIntermediateData, commonDataInfo);
         %         end
         %% MM 2016/08/26: ...is replaced by this call
-        [emis]=interfaceF_getEmisCLE(aggregationInfo.type, aggregationInfo.fullCLE, CLE, D, d, x, aggregationInfo.geometryIntermediateData, commonDataInfo);
+        %% [emis]=interfaceF_getEmisCLE(aggregationInfo.type, aggregationInfo.fullCLE, CLE, D, d, x, aggregationInfo.geometryIntermediateData, commonDataInfo);
+        
+        %% FF 20190329 Terraria Mod
+        [emis]=interfaceF_getEmisCLEref(aggregationInfo.type, aggregationInfo.fullCLE, CLE, aggregationInfo.fullCLEref, CLEref, D, d, x, aggregationInfo.geometryIntermediateData, commonDataInfo);
         
         %save('C:\data\work\projects\riat\RiatPlus-v3beta\datasave\varPoint6_new','emis');
         
@@ -2850,5 +2867,18 @@ aqi_per_cell=do_interface_get_aqi_per_cell(emissioni, NN, aggregationInfo, commo
 %         %        NN.ps_target.no_change=0; %to be compatible among different matlab versions
 %         %        aqi_per_cell=mapminmax('reverse',output_rete_norm2,NN.ps_target);
 %         %end
+if false
+    % funzioni chiamate con eval nel codice
+    % queste chiamate servono solo per linkare i sorgenti
+    quadrant_Prepare_main();
+    neuralNet_Prepare();
+    quadrant_rebuildOrderedEmis();
+    neuralNet_buildEmission();
+    neuralNet_do_aqi_per_cell();
+    neuralNet_get_aqipercell();
+    logsig();
+    quadrant_get_aqi_D();
+    % e tante altre
+end
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

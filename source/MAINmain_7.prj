@@ -1,0 +1,281 @@
+<deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
+  <configuration build-checksum="1329826101" file="D:\riat_data\source\MAINmain_7.prj" location="D:\riat_data\source" name="MAINmain_7" preferred-package-location="D:\riat_data\source\MAINmain_7\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
+    <param.appname>MAINmain_7_vers20190404</param.appname>
+    <param.icon />
+    <param.icons />
+    <param.version>1.0</param.version>
+    <param.authnamewatermark />
+    <param.email />
+    <param.company />
+    <param.summary />
+    <param.description />
+    <param.screenshot />
+    <param.guid />
+    <param.installpath.string>\MAINmain_7_vers20190404\</param.installpath.string>
+    <param.installpath.combo>option.installpath.programfiles</param.installpath.combo>
+    <param.logo />
+    <param.install.notes />
+    <param.target.install.notes />
+    <param.intermediate>${PROJECT_ROOT}\MAINmain_7\for_testing</param.intermediate>
+    <param.files.only>${PROJECT_ROOT}\MAINmain_7\for_redistribution_files_only</param.files.only>
+    <param.output>${PROJECT_ROOT}\MAINmain_7\for_redistribution</param.output>
+    <param.logdir>${PROJECT_ROOT}\MAINmain_7</param.logdir>
+    <param.enable.clean.build>false</param.enable.clean.build>
+    <param.user.defined.mcr.options />
+    <param.embed.ctf>true</param.embed.ctf>
+    <param.target.type>subtarget.standalone</param.target.type>
+    <param.support.packages />
+    <param.web.mcr>true</param.web.mcr>
+    <param.package.mcr>false</param.package.mcr>
+    <param.no.mcr>false</param.no.mcr>
+    <param.web.mcr.name>MyAppInstaller_web</param.web.mcr.name>
+    <param.package.mcr.name>MyAppInstaller_mcr</param.package.mcr.name>
+    <param.no.mcr.name>MyAppInstaller_app</param.no.mcr.name>
+    <param.windows.command.prompt>true</param.windows.command.prompt>
+    <param.create.log>false</param.create.log>
+    <param.log.file />
+    <unset>
+      <param.icon />
+      <param.icons />
+      <param.version />
+      <param.authnamewatermark />
+      <param.email />
+      <param.company />
+      <param.summary />
+      <param.description />
+      <param.screenshot />
+      <param.guid />
+      <param.installpath.string />
+      <param.installpath.combo />
+      <param.logo />
+      <param.target.install.notes />
+      <param.intermediate />
+      <param.files.only />
+      <param.output />
+      <param.logdir />
+      <param.enable.clean.build />
+      <param.user.defined.mcr.options />
+      <param.embed.ctf />
+      <param.target.type />
+      <param.support.packages />
+      <param.web.mcr />
+      <param.package.mcr />
+      <param.no.mcr />
+      <param.web.mcr.name />
+      <param.package.mcr.name />
+      <param.no.mcr.name />
+      <param.windows.command.prompt />
+      <param.create.log />
+      <param.log.file />
+    </unset>
+    <fileset.main>
+      <file>${PROJECT_ROOT}\MAINmain_7.m</file>
+    </fileset.main>
+    <fileset.resources>
+      <file>${PROJECT_ROOT}\calcCellNo.m</file>
+      <file>${PROJECT_ROOT}\CreateMap.m</file>
+      <file>${PROJECT_ROOT}\CreateScatter.m</file>
+      <file>${PROJECT_ROOT}\do_FullJob.m</file>
+      <file>${PROJECT_ROOT}\do_get_aqi_per_cell.m</file>
+      <file>${PROJECT_ROOT}\do_interface_get_aqi_per_cell.m</file>
+      <file>${PROJECT_ROOT}\do_Job.m</file>
+      <file>${PROJECT_ROOT}\EquaIndic.m</file>
+      <file>${PROJECT_ROOT}\fill_commonDataInfo.m</file>
+      <file>${PROJECT_ROOT}\firstguess_aggregated_scenario_mode.m</file>
+      <file>${PROJECT_ROOT}\firstguess_buildEmission.m</file>
+      <file>${PROJECT_ROOT}\firstguess_do_aqi_per_cell.m</file>
+      <file>${PROJECT_ROOT}\firstguess_do_Job.m</file>
+      <file>${PROJECT_ROOT}\firstguess_emi.m</file>
+      <file>${PROJECT_ROOT}\firstguess_fill_commonDataInfo.m</file>
+      <file>${PROJECT_ROOT}\firstguess_fillcomputesol.m</file>
+      <file>${PROJECT_ROOT}\firstguess_Finalize.m</file>
+      <file>${PROJECT_ROOT}\firstguess_get_aqi_D.m</file>
+      <file>${PROJECT_ROOT}\firstguess_get_aqipercell.m</file>
+      <file>${PROJECT_ROOT}\firstguess_get_DSuperSet.m</file>
+      <file>${PROJECT_ROOT}\firstguess_get_expectedOutput.m</file>
+      <file>${PROJECT_ROOT}\firstguess_getFirstValidInfo.m</file>
+      <file>${PROJECT_ROOT}\firstguess_Prepare.m</file>
+      <file>${PROJECT_ROOT}\firstguess_Prepare_init.m</file>
+      <file>${PROJECT_ROOT}\firstguess_Prepare_main.m</file>
+      <file>${PROJECT_ROOT}\firstguess_read.m</file>
+      <file>${PROJECT_ROOT}\firstguess_read_Bc.m</file>
+      <file>${PROJECT_ROOT}\firstguess_rebuildOrderedEmis.m</file>
+      <file>${PROJECT_ROOT}\firstguess_updateAggInfo.m</file>
+      <file>${PROJECT_ROOT}\gaussian_Finalize.m</file>
+      <file>${PROJECT_ROOT}\gaussian_Prepare.m</file>
+      <file>${PROJECT_ROOT}\generic_Prepare.m</file>
+      <file>${PROJECT_ROOT}\getOrderedPoll.m</file>
+      <file>${PROJECT_ROOT}\gridCorrectionCase1.m</file>
+      <file>${PROJECT_ROOT}\gridCorrectionCase2.m</file>
+      <file>${PROJECT_ROOT}\init_AQIDefinition.m</file>
+      <file>${PROJECT_ROOT}\init_CommonVar.m</file>
+      <file>${PROJECT_ROOT}\init_ConfigurationVar.m</file>
+      <file>${PROJECT_ROOT}\init_Domain.m</file>
+      <file>${PROJECT_ROOT}\init_OptimDefinition.m</file>
+      <file>${PROJECT_ROOT}\INITmain_7.m</file>
+      <file>${PROJECT_ROOT}\INITmain_7.prj</file>
+      <file>${PROJECT_ROOT}\initVar.m</file>
+      <file>${PROJECT_ROOT}\interface_buildEmission.m</file>
+      <file>${PROJECT_ROOT}\interface_fill_common_data_info.m</file>
+      <file>${PROJECT_ROOT}\interface_fillcomputesol.m</file>
+      <file>${PROJECT_ROOT}\interface_finalize.m</file>
+      <file>${PROJECT_ROOT}\interface_get_aqi_bc.m</file>
+      <file>${PROJECT_ROOT}\interface_get_aqi_D.m</file>
+      <file>${PROJECT_ROOT}\interface_get_aqi_nn.m</file>
+      <file>${PROJECT_ROOT}\interface_get_aqi_nnOptSet.m</file>
+      <file>${PROJECT_ROOT}\interface_get_aqi_per_cell.m</file>
+      <file>${PROJECT_ROOT}\interface_get_aqipercell.m</file>
+      <file>${PROJECT_ROOT}\interface_get_bcSuperSet.m</file>
+      <file>${PROJECT_ROOT}\interface_get_build_solution_D_indexed.m</file>
+      <file>${PROJECT_ROOT}\interface_get_Dd_DOptSet.m</file>
+      <file>${PROJECT_ROOT}\interface_get_Dd_p_DOptSet.m</file>
+      <file>${PROJECT_ROOT}\interface_get_DSuperSet.m</file>
+      <file>${PROJECT_ROOT}\interface_get_DSuperSetFunction_indexed.m</file>
+      <file>${PROJECT_ROOT}\interface_get_ExpectedOutput.m</file>
+      <file>${PROJECT_ROOT}\interface_get_nnOptSet.m</file>
+      <file>${PROJECT_ROOT}\interface_get_nnSuperSet.m</file>
+      <file>${PROJECT_ROOT}\interface_get_nnSuperSet_indexed.m</file>
+      <file>${PROJECT_ROOT}\interface_get_pollutant_list.m</file>
+      <file>${PROJECT_ROOT}\interface_get_quadrant.m</file>
+      <file>${PROJECT_ROOT}\interface_get_xMin.m</file>
+      <file>${PROJECT_ROOT}\interface_getOrderedPoll.m</file>
+      <file>${PROJECT_ROOT}\interface_is2Input.m</file>
+      <file>${PROJECT_ROOT}\interface_is6Input.m</file>
+      <file>${PROJECT_ROOT}\interface_isAggregatedEmis.m</file>
+      <file>${PROJECT_ROOT}\interface_isDeltaEmis.m</file>
+      <file>${PROJECT_ROOT}\interface_prepare.m</file>
+      <file>${PROJECT_ROOT}\interface_prepareData.m</file>
+      <file>${PROJECT_ROOT}\interface_prepareMainData.m</file>
+      <file>${PROJECT_ROOT}\interface_prepareMathData.m</file>
+      <file>${PROJECT_ROOT}\interface_rebuildOrderedEmis.m</file>
+      <file>${PROJECT_ROOT}\interface_update_Dd_DOptSet.m</file>
+      <file>${PROJECT_ROOT}\interface_update_Dd_p_DOptSet.m</file>
+      <file>${PROJECT_ROOT}\interface_updateAggInfo.m</file>
+      <file>${PROJECT_ROOT}\interfaceF_fillAggregationInfoFromFile.m</file>
+      <file>${PROJECT_ROOT}\interfaceF_fillFirstAggregationInfo.m</file>
+      <file>${PROJECT_ROOT}\interfaceF_getaqiCLEInfo.m</file>
+      <file>${PROJECT_ROOT}\interfaceF_getaqipercell.m</file>
+      <file>${PROJECT_ROOT}\interfaceF_getAreas.m</file>
+      <file>${PROJECT_ROOT}\interfaceF_getCellInfo.m</file>
+      <file>${PROJECT_ROOT}\interfaceF_getcompute_aqi_Info.m</file>
+      <file>${PROJECT_ROOT}\interfaceF_getEmis.m</file>
+      <file>${PROJECT_ROOT}\interfaceF_getEmisCLE.m</file>
+      <file>${PROJECT_ROOT}\interfaceF_getfminconInput.m</file>
+      <file>${PROJECT_ROOT}\interfaceF_getlocalSuperSet.m</file>
+      <file>${PROJECT_ROOT}\interfaceF_launchPOSTMain.m</file>
+      <file>${PROJECT_ROOT}\interfaceF_prepareMathDataInfo.m</file>
+      <file>${PROJECT_ROOT}\interfaceF_rebuildOrderedEmis.m</file>
+      <file>${PROJECT_ROOT}\interfaceF_recomputeaqipercell.m</file>
+      <file>${PROJECT_ROOT}\load_AggregationDataSetting.m</file>
+      <file>${PROJECT_ROOT}\load_AggregationInfo.m</file>
+      <file>${PROJECT_ROOT}\load_CommonDataInfo.m</file>
+      <file>${PROJECT_ROOT}\load_FinalizeJobSetting.m</file>
+      <file>${PROJECT_ROOT}\load_InterfaceDataSetting.m</file>
+      <file>${PROJECT_ROOT}\load_PrepareDataSetting.m</file>
+      <file>${PROJECT_ROOT}\load_SettingInfo.m</file>
+      <file>${PROJECT_ROOT}\MAINbase_emi.m</file>
+      <file>${PROJECT_ROOT}\MAINcreate_constraints_matrix.m</file>
+      <file>${PROJECT_ROOT}\MAINload_emi.m</file>
+      <file>${PROJECT_ROOT}\MAINmain_7.m</file>
+      <file>${PROJECT_ROOT}\MAINmain_7.prj</file>
+      <file>${PROJECT_ROOT}\MAINmapper.m</file>
+      <file>${PROJECT_ROOT}\NET_Converter.m</file>
+      <file>${PROJECT_ROOT}\net_read.m</file>
+      <file>${PROJECT_ROOT}\neuralNet_buildEmission.m</file>
+      <file>${PROJECT_ROOT}\neuralNet_do_aqi_per_cell.m</file>
+      <file>${PROJECT_ROOT}\neuralNet_get_aqi_bc.m</file>
+      <file>${PROJECT_ROOT}\neuralNet_get_aqi_nnOptSet.m</file>
+      <file>${PROJECT_ROOT}\neuralNet_get_aqipercell.m</file>
+      <file>${PROJECT_ROOT}\neuralNet_get_bcSuperSet.m</file>
+      <file>${PROJECT_ROOT}\neuralNet_get_FullDOptSet.m</file>
+      <file>${PROJECT_ROOT}\neuralNet_get_nnOptSet.m</file>
+      <file>${PROJECT_ROOT}\neuralNet_get_nnSuperSet.m</file>
+      <file>${PROJECT_ROOT}\neuralNet_get_nnSuperSet_indexed.m</file>
+      <file>${PROJECT_ROOT}\neuralNet_is2Input.m</file>
+      <file>${PROJECT_ROOT}\neuralNet_is6Input.m</file>
+      <file>${PROJECT_ROOT}\neuralNet_isAggregatedEmis.m</file>
+      <file>${PROJECT_ROOT}\neuralNet_isDeltaEmis.m</file>
+      <file>${PROJECT_ROOT}\neuralNet_Prepare.m</file>
+      <file>${PROJECT_ROOT}\neuralNet_set_FullDOptSet.m</file>
+      <file>${PROJECT_ROOT}\POSTmain.m</file>
+      <file>${PROJECT_ROOT}\POSTmain_FG.m</file>
+      <file>${PROJECT_ROOT}\quadrant_fill_commonDataInfo.m</file>
+      <file>${PROJECT_ROOT}\quadrant_Finalize.m</file>
+      <file>${PROJECT_ROOT}\quadrant_get_ann_radius_indexed.m</file>
+      <file>${PROJECT_ROOT}\quadrant_get_aqi_bc.m</file>
+      <file>${PROJECT_ROOT}\quadrant_get_aqi_D.m</file>
+      <file>${PROJECT_ROOT}\quadrant_get_aqi_nn.m</file>
+      <file>${PROJECT_ROOT}\quadrant_get_aqi_nnOptSet.m</file>
+      <file>${PROJECT_ROOT}\quadrant_get_bcSuperSet.m</file>
+      <file>${PROJECT_ROOT}\quadrant_get_bcSuperSet_indexed.m</file>
+      <file>${PROJECT_ROOT}\quadrant_get_Dd_DOptSet.m</file>
+      <file>${PROJECT_ROOT}\quadrant_get_Dd_p_DOptSet.m</file>
+      <file>${PROJECT_ROOT}\quadrant_get_DOptSet.m</file>
+      <file>${PROJECT_ROOT}\quadrant_get_DOptSet_indexed.m</file>
+      <file>${PROJECT_ROOT}\quadrant_get_DSuperSet.m</file>
+      <file>${PROJECT_ROOT}\quadrant_get_DSuperSet_indexed.m</file>
+      <file>${PROJECT_ROOT}\quadrant_get_expectedOutput.m</file>
+      <file>${PROJECT_ROOT}\quadrant_Prepare_init.m</file>
+      <file>${PROJECT_ROOT}\quadrant_Prepare_main.m</file>
+      <file>${PROJECT_ROOT}\quadrant_rebuildOrderedEmis.m</file>
+      <file>${PROJECT_ROOT}\quadrant_Restore.m</file>
+      <file>${PROJECT_ROOT}\quadrant_update_Dd_DOptSet.m</file>
+      <file>${PROJECT_ROOT}\quadrant_update_Dd_p_DOptSet.m</file>
+      <file>${PROJECT_ROOT}\sim_exe.m</file>
+    </fileset.resources>
+    <fileset.package />
+    <fileset.depfun>
+      <file>${PROJECT_ROOT}\interfaceF_getEmisCLEref.m</file>
+    </fileset.depfun>
+    <build-deliverables>
+      <file location="${PROJECT_ROOT}\MAINmain_7\for_testing" name="readme.txt" optional="true">D:\riat_data\source\MAINmain_7\for_testing\readme.txt</file>
+      <file location="${PROJECT_ROOT}\MAINmain_7\for_testing" name="MAINmain_7_vers20190404.exe" optional="false">D:\riat_data\source\MAINmain_7\for_testing\MAINmain_7_vers20190404.exe</file>
+      <file location="${PROJECT_ROOT}\MAINmain_7\for_testing" name="splash.png" optional="false">D:\riat_data\source\MAINmain_7\for_testing\splash.png</file>
+    </build-deliverables>
+    <workflow />
+    <matlab>
+      <root>D:\MATLAB\R2016a</root>
+      <toolboxes>
+        <toolbox name="fixedpoint" />
+        <toolbox name="matlabcoder" />
+        <toolbox name="matlabhdlcoder" />
+        <toolbox name="embeddedcoder" />
+      </toolboxes>
+      <toolbox>
+        <fixedpoint>
+          <enabled>true</enabled>
+        </fixedpoint>
+      </toolbox>
+      <toolbox>
+        <matlabcoder>
+          <enabled>true</enabled>
+        </matlabcoder>
+      </toolbox>
+      <toolbox>
+        <matlabhdlcoder>
+          <enabled>true</enabled>
+        </matlabhdlcoder>
+      </toolbox>
+      <toolbox>
+        <embeddedcoder>
+          <enabled>true</enabled>
+        </embeddedcoder>
+      </toolbox>
+    </matlab>
+    <platform>
+      <unix>false</unix>
+      <mac>false</mac>
+      <windows>true</windows>
+      <win2k>false</win2k>
+      <winxp>false</winxp>
+      <vista>false</vista>
+      <linux>false</linux>
+      <solaris>false</solaris>
+      <osver>6.1</osver>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>win64</arch>
+      <matlab>true</matlab>
+    </platform>
+  </configuration>
+</deployment-project>
