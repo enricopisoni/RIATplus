@@ -42,18 +42,11 @@ end
 
 %enlarged emission, with increased zeros all around (used to be able to
 %perform simple products among emi and factor matrix
-
-% FF 20190402 Terraria Mod Correzione calcolo emissioni aggregate:
-% emi_enlarged=zeros(size(emi,1)+2*(rad-2),size(emi,2)+2*(rad-2));
-% ZeroMap=emi_enlarged;
-% emi_res=emi;
-% emi_enlarged(rad-2+1:rad-2+1+size(emi,1)-1,rad-2+1:rad-2+1+size(emi,2)-1)=emi;
-emi_enlarged=zeros(size(emi,1)+2*rad,size(emi,2)+2*rad);
+% FF 20190
+emi_enlarged=zeros(size(emi,1)+2*(rad-2),size(emi,2)+2*(rad-2));
 ZeroMap=emi_enlarged;
 emi_res=emi;
-emi_enlarged(rad+1:rad+1+size(emi,1)-1,rad+1:rad+1+size(emi,2)-1)=emi;
-% FF 20190402 Terraria Mod
-
+emi_enlarged(rad-2+1:rad-2+1+size(emi,1)-1,rad-2+1:rad-2+1+size(emi,2)-1)=emi;
 [sa sb]=size(emi_enlarged);
 
 if sum(valori_emi)~=0

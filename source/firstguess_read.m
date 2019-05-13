@@ -28,7 +28,19 @@ pollutantList={'NOx';'NMVOC';'NH3';'PM10';'PM25';'SOx'};
 
 ncid=netcdf.open(fileName,'NC_NOWRITE');
 varid=netcdf.getConstant('GLOBAL');
-radius=netcdf.getAtt(ncid,varid,'Radius of influence');
+[num_dims, num_vars, num_global_atts, unlimdimID] = netcdf.inq(ncid);
+for attid = 0:num_global_atts-1
+    attName = netcdf.inqAttName(ncid,varid,attid);
+    if strcmp(attName,'Radius_of_influence')==1 | strcmp(attName,'Radius of influence')==1
+        radius=netcdf.getAtt(ncid,varid,attName);
+    end
+end
+%try
+%    radius=netcdf.getAtt(ncid,varid,'Radius_of_influence');
+%catch exception
+%    radius=netcdf.getAtt(ncid,varid,'Radius of influence');
+%end
+%radius=netcdf.getAtt(ncid,varid,'Radius_of_influence');
 tuePollutantList=netcdf.getAtt(ncid,varid,'Order_Pollutant');
 
 %remain = pollutantList;

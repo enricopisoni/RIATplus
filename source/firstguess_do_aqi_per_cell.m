@@ -47,8 +47,13 @@ function [aqi_per_cell]= firstguess_do_aqi_per_cell( emissioni, NN, aggregationI
         
         %from the SR netcdf, use only NOx(1), NH3(3), PM25(5), SO2(6)
         %if jj eq 0 or 1
-        if (aqiIndex == 1) aqi_per_cell=sum(emissioni(:,[1 3 4 6]).*thisAlpha(:,[1 3 4 6]),2); end %nox,nh3,pm10,so2
-        if (aqiIndex == 2) aqi_per_cell=sum(emissioni(:,[1 3 5 6]).*thisAlpha(:,[1 3 5 6]),2); end %nox,nh3,pm25,so2
+        % FF 20190402 Terraria Mod: aggiunto VOC(2) nel calcolo delle
+        % concentrazioni
+%         if (aqiIndex == 1) aqi_per_cell=sum(emissioni(:,[1 3 4 6]).*thisAlpha(:,[1 3 4 6]),2); end %nox,nh3,pm10,so2
+%         if (aqiIndex == 2) aqi_per_cell=sum(emissioni(:,[1 3 5 6]).*thisAlpha(:,[1 3 5 6]),2); end %nox,nh3,pm25,so2
+%         if (aqiIndex == 6) aqi_per_cell=sum(emissioni(:,[1]).*thisAlpha(:,[1]),2); end             %nox
+        if (aqiIndex == 1) aqi_per_cell=sum(emissioni(:,[1 2 3 4 6]).*thisAlpha(:,[1 2 3 4 6]),2); end %nox,nh3,pm10,so2
+        if (aqiIndex == 2) aqi_per_cell=sum(emissioni(:,[1 2 3 5 6]).*thisAlpha(:,[1 2 3 5 6]),2); end %nox,nh3,pm25,so2
         if (aqiIndex == 6) aqi_per_cell=sum(emissioni(:,[1]).*thisAlpha(:,[1]),2); end             %nox
         
         %change name to a better one!!! (too similar to caller...)

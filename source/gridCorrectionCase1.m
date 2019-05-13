@@ -6,7 +6,8 @@ function [domainData, domainInfo, emi]=gridCorrectionCase1(origDomainData, origD
  domainData.ny=domainData.ny-3; %problem in RIAT about number of cells
  domainData.ncel=domainData.nx*domainData.ny;
  [dataerase]=find(domainData.coordinate(:,1)>874.28 | domainData.coordinate(:,2)>5210.7);
- domainInfo.flag_optim_dom=domainInfo.flag_optim_dom(dataerase,:)=[];
+ domainInfo.flag_optim_dom(dataerase,:)=[];
+ domainInfo.flag_optim_dom=[];
  domainData.coordinate(dataerase,:)=[];
  domainInfo.pop(dataerase,:)=[];
  domainInfo.flag_aqi_dom(dataerase,:)=[];

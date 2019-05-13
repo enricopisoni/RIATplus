@@ -508,6 +508,13 @@ end
 %cut ddsparse and ddsparsep
 disp('PROGRESSION: matrices d and D created');
 
+if false
+    % funzioni chiamate con eval nel codice
+    % queste chiamate servono solo per linkare i sorgenti
+    quadrant_Prepare_init();
+    quadrant_get_expectedOutput();
+    quadrant_Finalize();
+end
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
